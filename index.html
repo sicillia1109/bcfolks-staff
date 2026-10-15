@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Buku Staff">
+<meta name="theme-color" content="#1F4E5A">
+<meta name="robots" content="noindex, nofollow">
 <title>BC-Folks · Buku Staff</title>
 <style>
   :root {
@@ -566,19 +570,21 @@
   }
 
   /* ---------- sambungan ke server ---------- */
+  /* v1.5 — halaman ini dibuka dari GitHub Pages; data tetap lewat Apps Script (doPost). */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwnjyBfmLT9lNzy6iNxfA4BGARQV1XOdl95tvS76vEQlERnUrEFE6vi80_zKol02KJspQ/exec';
   function call(action, payload) {
     return new Promise(function (resolve, reject) {
       var req = { action: action, token: S.token };
       for (var k in (payload || {})) req[k] = payload[k];
-      google.script.run
-        .withSuccessHandler(function (r) {
+      fetch(API_URL, { method: 'POST', body: JSON.stringify(req), redirect: 'follow', credentials: 'omit' })
+        .then(function (resp) { if (!resp.ok) throw new Error('http ' + resp.status); return resp.json(); })
+        .then(function (r) {
           if (r && r.ok) return resolve(r.data);
           var e = new Error((r && r.error) || 'Gagal. Coba lagi.'); e.code = (r && r.code) || ''; reject(e);
         })
-        .withFailureHandler(function () {
+        .catch(function () {
           var e = new Error('Tidak tersambung. Cek internet, lalu tekan simpan lagi.'); e.net = true; reject(e);
-        })
-        .api(req);
+        });
     });
   }
   function hash(str) { var x = 5381; for (var i = 0; i < str.length; i++) x = ((x << 5) + x + str.charCodeAt(i)) | 0; return (x >>> 0).toString(36); }
@@ -607,6 +613,16 @@
   }
 
   /* ---------- aturan satuan (sama dengan kolom "Cek stok") ---------- */
+  function newUnits(u) {
+    var sa = String(u[0] || '').toLowerCase().trim(), st = String(u[1] || '').toLowerCase().trim();
+    if (!sa && !st) return [];
+    var sk = /^(gram|kilogram)$/.test(st) ? 'gram' : /^(ml|liter)$/.test(st) ? 'ml' : 'satuan/pc(s)';
+    var out = ['pack asal', sk];
+    if (sa === 'satuan') out.push('satuan/pc(s)');
+    if (/^(gram|kilogram)$/.test(sa)) out.push('gram');
+    if (/^(ml|liter)$/.test(sa)) out.push('ml');
+    return out.filter(function (x, i) { return out.indexOf(x) === i; });
+  }
   function unitRule(kind, sku) {
     var s = String(sku || '');
     if (!s) return { stock: false, allowed: null };
@@ -614,10 +630,7 @@
     if (nonStock) return { stock: false, allowed: null };
     var u = S.boot.st.units[s.split(' ')[0]];
     if (!u) return { stock: true, allowed: null };
-    var cand = [u[0], u[1]].concat(String(u[0]).split('/'));
-    if (kind === 'keluar') { if (u[1] === 'gram') cand.push('kilogram'); if (u[1] === 'ml') cand.push('liter'); }
-    var allowed = [];
-    cand.forEach(function (c) { if (c && allowed.indexOf(c) < 0 && S.boot.st.satuan.indexOf(c) >= 0) allowed.push(c); });
+    var allowed = newUnits(u).filter(function (c) { return S.boot.st.satuan.indexOf(c) >= 0; });  // 4 satuan, 15-10-2026
     return { stock: true, allowed: allowed.length ? allowed : null };
   }
   function fillSelect(sel, items, placeholder, keep) {
@@ -664,7 +677,7 @@
   function konvFor(sku, sat) {
     var k = (S.boot.st.konv || {})[String(sku || '').split(' ')[0]];
     if (!k || !sat || k[1] === k[3] || WEIGHT.indexOf(k[1]) >= 0) return null;
-    return sat === k[1] || k[1].split('/').indexOf(sat) >= 0 ? { n: k[2] / k[0], u: k[3] } : null;
+    return sat === k[1] || sat === 'pack asal' || k[1].split('/').indexOf(sat) >= 0 ? { n: k[2] / k[0], u: k[3] } : null;
   }
   /** Persamaan satuan beli ↔ pcs di form pembelian. */
   function isiRefresh(prefill) {
@@ -1307,7 +1320,7 @@
       var allowed = unitRule('keluar', it.sku).allowed || [], u = st.units[it.code], pack = packOf(it.sku);
       var keep = OP.vals[it.sku] || {}, d = isToday ? done[it.code] : null;
       // satuan bawaan: pack → satuan beli; olahan yang dibungkus (topping) → bungkus; lainnya → satuan terkecil (pcs / gram)
-      var def = it.g === 'C' && pack ? u[0] : (it.code.slice(0, 2) === 'BO' && WEIGHT.indexOf(u[1]) >= 0 && u[0] !== u[1] ? u[0] : u[1]);
+      var def = it.g === 'C' && pack ? 'pack asal' : (it.code.slice(0, 2) === 'BO' && WEIGHT.indexOf(u[1]) >= 0 && u[0] !== u[1] ? 'pack asal' : (newUnits(u)[1] || ''));
       if (allowed.indexOf(def) < 0) def = allowed[0] || '';
       var inp = h('input', { class: 'in', type: 'text', inputmode: 'decimal', autocomplete: 'off',
         placeholder: d ? String(d.qty) : '0', 'aria-label': 'Jumlah ' + shortName(it.sku) });
