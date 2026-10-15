@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BC-Folks · Buku Staff</title>
+<style>
+  :root {
+    --paper: #FBF7EE; --card: #FFFFFF; --ink: #16323A; --muted: #62767B;
+    --teal: #1F4E5A; --teal-soft: #E4EEF0; --line: #E6DFCE;
+    --yellow: #FFF7C7; --yellow-line: #E6D36A;      /* kuning = diisi staff */
+    --blue: #E3EEFB; --blue-ink: #234A78;           /* biru = dari Sicillia */
+    --pink: #FCE7EC; --pink-ink: #8A2C44;           /* merah muda = otomatis */
+    --red: #B3392F; --red-soft: #FBE9E6; --green: #1F7A4D; --green-soft: #E4F3EA;
+    --amber: #8A5A00; --amber-soft: #FFF0CF;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  [hidden] { display: none !important; }
+  h1, h2, h3, p { margin: 0; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+
+  /* ---------- login ---------- */
+  .login { min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+           padding: 28px 20px; max-width: 460px; margin: 0 auto; }
+  .brand { font-weight: 800; letter-spacing: .02em; color: var(--teal); font-size: 15px; text-transform: uppercase; }
+  .login h1 { font-size: 30px; line-height: 1.15; margin: 6px 0 6px; text-wrap: balance; }
+  .login p.sub { color: var(--muted); margin-bottom: 22px; }
+
+  /* ---------- kepala ---------- */
+  .sticky { position: sticky; top: 0; z-index: 20; }
+  .top { background: var(--teal); color: #fff; padding: 12px 16px 10px; }
+  .top-row { display: flex; align-items: center; gap: 12px; max-width: 620px; margin: 0 auto; }
+  .who { flex: 1; min-width: 0; }
+  .who b { display: block; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .who span { display: block; font-size: 13px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .saldo { text-align: right; }
+  .saldo span { display: block; font-size: 12px; opacity: .8; }
+  .saldo b { font-size: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .saldo b.neg { color: #FFC9C2; }
+  .iconbtn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,.3);
+             background: transparent; color: #fff; font-size: 20px; flex: none; }
+  .iconbtn.spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .iconbtn.spin { animation: none; opacity: .5; } }
+
+  .chips { background: var(--paper); border-bottom: 1px solid var(--line); }
+  .chips-in { display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto; max-width: 620px; margin: 0 auto;
+              scrollbar-width: none; }
+  .chips-in::-webkit-scrollbar { display: none; }
+  .chip { flex: none; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line);
+          background: var(--card); font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+  .chip i { font-style: normal; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px;
+            background: var(--red); color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+
+  main { max-width: 620px; margin: 0 auto; padding: 4px 12px 40px; }
+
+  /* ---------- kartu bagian ---------- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px;
+          padding: 16px; margin: 12px 0; scroll-margin-top: 130px; }
+  .sec-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+  .num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--teal); color: #fff;
+         font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .sec-head h2 { font-size: 19px; line-height: 1.25; }
+  .sec-head p { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  h3 { font-size: 15px; margin: 18px 0 8px; color: var(--teal); }
+
+  /* ---------- isian ---------- */
+  .f { display: block; margin-bottom: 12px; }
+  .lb { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+        font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+  .lb em { font-style: normal; font-weight: 400; color: var(--muted); font-size: 13px; }
+  .in, .pick { width: 100%; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--yellow-line);
+               background: var(--yellow); padding: 12px 14px; font-size: 17px; outline: none; }
+  textarea.in { min-height: 76px; resize: vertical; }
+  select.in { appearance: none; -webkit-appearance: none; padding-right: 38px;
+              background-image: linear-gradient(45deg, transparent 50%, var(--teal) 50%), linear-gradient(135deg, var(--teal) 50%, transparent 50%);
+              background-position: calc(100% - 20px) 23px, calc(100% - 14px) 23px; background-size: 6px 6px; background-repeat: no-repeat; }
+  .in:focus, .pick:focus-visible { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(31,78,90,.18); }
+  .pick { text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .pick span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pick.is-empty span { color: var(--muted); }
+  .pick::after { content: "›"; font-size: 24px; color: var(--teal); line-height: 1; }
+  .row2 { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; }
+  .rp { position: relative; }
+  .rp .in { padding-left: 46px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rp::before { content: "Rp"; position: absolute; left: 14px; top: 14px; font-weight: 700; color: var(--muted); }
+  .hint { display: block; font-size: 13px; color: var(--muted); margin-top: 5px; }
+  .hint.auto { color: var(--pink-ink); background: var(--pink); border-radius: 8px; padding: 6px 10px; }
+  .own .in, .own .pick { background: var(--blue); border-color: #A9C4E8; }   /* biru = diisi Sicillia */
+  .num.own-num { background: var(--blue-ink); }
+  .opts button { display: block; width: 100%; text-align: left; min-height: 56px; padding: 10px 14px; margin-bottom: 8px;
+                 border-radius: 12px; border: 1.5px solid var(--yellow-line); background: var(--yellow); font-weight: 700; font-size: 16px; }
+  .opts button small { display: block; font-weight: 400; font-size: 13px; color: var(--muted); }
+  .opts button[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: #fff; }
+  .opts button[aria-pressed="true"] small { color: #DCE8EA; }
+  .ing { list-style: none; margin: 0 0 4px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+  .ing li + li { border-top: 1px solid var(--line); }
+  .ing label { display: flex; gap: 12px; align-items: center; min-height: 52px; padding: 8px 12px; }
+  .ing input { width: 26px; height: 26px; accent-color: var(--teal); flex: none; }
+  .ing .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .ing .qt { flex: none; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+  .ing .qt small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+  .ing input:checked ~ .nm, .ing input:checked ~ .qt { text-decoration: line-through; color: var(--muted); }
+  .target { background: var(--pink); color: var(--pink-ink); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; font-size: 15px; }
+  .item .target b { display: inline; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .lb em.nw { white-space: nowrap; }
+
+  .check { display: flex; gap: 10px; align-items: center; min-height: 48px; font-size: 15px; margin-bottom: 8px; }
+  .check input { width: 24px; height: 24px; accent-color: var(--teal); flex: none; }
+
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .seg button { min-height: 50px; border-radius: 12px; border: 1.5px solid var(--yellow-line); background: var(--yellow);
+                font-weight: 600; font-size: 15px; }
+  .seg button[aria-pressed="true"] { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+  /* ---------- foto ---------- */
+  .photo { position: relative; display: flex; align-items: center; gap: 12px; }
+  .photo .shot { flex: 1; min-height: 52px; border-radius: 12px; border: 1.5px dashed var(--yellow-line);
+                 background: var(--yellow); font-weight: 600; font-size: 15px; padding: 10px 14px; text-align: left; }
+  .photo img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); flex: none; }
+  .photo .del { flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); font-size: 18px; }
+  .photo input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+  /* ---------- tombol ---------- */
+  .btn { width: 100%; min-height: 54px; border-radius: 14px; border: 0; background: var(--teal); color: #fff;
+         font-weight: 700; font-size: 17px; padding: 0 16px; margin-top: 4px; }
+  .btn:disabled { opacity: .6; }
+  .btn.ghost { background: transparent; color: var(--teal); border: 1.5px solid var(--teal); }
+  .btn.small { min-height: 46px; font-size: 15px; width: auto; padding: 0 18px; margin: 0; }
+  .link { background: none; border: 0; color: var(--teal); font-weight: 600; text-decoration: underline; padding: 12px 4px; min-height: 44px; }
+
+  .msg { border-radius: 12px; padding: 12px 14px; font-size: 15px; margin: 4px 0 12px; }
+  .msg.err { background: var(--red-soft); color: var(--red); font-weight: 600; }
+  .msg.ok { background: var(--green-soft); color: var(--green); font-weight: 600; }
+  .msg.warn { background: var(--amber-soft); color: var(--amber); font-weight: 600; }
+  .msg small { display: block; font-weight: 400; margin-top: 4px; }
+
+  /* ---------- daftar ---------- */
+  .item { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; background: #FFFDF8; }
+  .item-top { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+  .item b { font-size: 16px; display: block; overflow-wrap: anywhere; }
+  .item .meta { font-size: 14px; color: var(--muted); margin-top: 2px; overflow-wrap: anywhere; }
+  .badge { flex: none; font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+           background: var(--amber-soft); color: var(--amber); white-space: nowrap; }
+  .badge.late { background: var(--red-soft); color: var(--red); }
+  .badge.auto { background: var(--pink); color: var(--pink-ink); }
+  .note-owner { background: var(--blue); color: var(--blue-ink); border-radius: 10px; padding: 8px 10px; font-size: 14px; margin-top: 8px; }
+  .item .act { margin-top: 10px; display: flex; justify-content: flex-end; }
+  .item form { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+  .empty { text-align: center; color: var(--muted); padding: 18px 8px; font-size: 15px;
+           border: 1px dashed var(--line); border-radius: 14px; }
+
+  .recent { list-style: none; margin: 0; padding: 0; }
+  .recent li { display: flex; gap: 10px; align-items: center; justify-content: space-between;
+               padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .recent .t { min-width: 0; }
+  .recent .t b { display: block; font-size: 15px; overflow-wrap: anywhere; }
+  .recent .t span { color: var(--muted); }
+  .recent .r { text-align: right; flex: none; font-variant-numeric: tabular-nums; }
+  .recent .again { display: block; margin-left: auto; border: 1px solid var(--line); background: var(--card); border-radius: 999px;
+                   min-height: 34px; padding: 0 12px; font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+  details.more { border-top: 1px solid var(--line); margin-top: 16px; }
+  details.more summary { list-style: none; min-height: 52px; display: flex; align-items: center; justify-content: space-between;
+                         font-weight: 700; color: var(--teal); }
+  details.more summary::-webkit-details-marker { display: none; }
+  details.more summary::after { content: "+"; font-size: 24px; }
+  details.more[open] summary::after { content: "–"; }
+
+  .foot { text-align: center; color: var(--muted); font-size: 13px; padding: 16px 12px 0; }
+
+  /* ---------- pemilih (bottom sheet) ---------- */
+  .sheet { position: fixed; inset: 0; z-index: 50; background: rgba(22,50,58,.45); display: flex; align-items: flex-end; }
+  .sheet-in { background: var(--card); width: 100%; max-width: 620px; margin: 0 auto; border-radius: 20px 20px 0 0;
+              max-height: 88vh; display: flex; flex-direction: column; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 8px; }
+  .sheet-head b { font-size: 17px; }
+  .sheet-search { padding: 0 16px 10px; }
+  .sheet-list { overflow-y: auto; padding: 0 8px 16px; overscroll-behavior: contain; }
+  .opt { width: 100%; text-align: left; min-height: 52px; padding: 10px 12px; border: 0; border-bottom: 1px solid var(--line);
+         background: none; font-size: 16px; display: block; }
+  .opt small { display: block; color: var(--muted); font-size: 13px; }
+  .opt.sel { background: var(--teal-soft); border-radius: 10px; font-weight: 700; }
+
+  #toast { position: fixed; left: 50%; top: 132px; transform: translateX(-50%); z-index: 60; background: var(--ink); color: #fff;
+           padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 15px; max-width: 92vw; text-align: center; }
+  .loading { text-align: center; color: var(--muted); padding: 60px 20px; }
+
+  /* ---------- hitung stok ---------- */
+  .lokasi { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 18px 0 2px; }
+  .cnt { padding: 10px 0; border-top: 1px solid var(--line); }
+  .cnt b { display: block; font-size: 15px; overflow-wrap: anywhere; }
+  .cnt .sub { display: block; font-size: 13px; color: var(--muted); }
+  .cnt .sub.done { color: var(--green); font-weight: 600; }
+  .cnt .ctl { display: grid; grid-template-columns: 1fr 1.25fr; gap: 10px; margin-top: 6px; }
+  .cnt .in { min-height: 48px; padding: 9px 12px; }
+  .cnt select.in { background-position: calc(100% - 20px) 21px, calc(100% - 14px) 21px; font-size: 15px; }
+
+  /* ---------- brief pagi ---------- */
+  .brief { border-color: var(--yellow-line); background: #FFFCF0; }
+  .num.sun { background: #E9A400; font-size: 18px; }
+  .brief h3:first-of-type { margin-top: 4px; }
+  .brief .item { background: var(--card); }
+  .brief .item.done { background: var(--green-soft); border-color: #BFE0CC; }
+  .brief .item.done b { color: var(--green); }
+  .brief .kur { border-bottom: 1px solid var(--line); }
+  .brief .kur li:first-child { border-top: 0; }
+  .brief .kur .r b { display: block; font-size: 15px; color: var(--red); white-space: nowrap; }
+  .brief .kur .r .pk { display: block; color: var(--muted); font-size: 13px; }
+  .brief .kur .r .badge { display: inline-block; margin-top: 3px; }
+  .brief .kur.ord .r b { color: var(--blue-ink); }
+  .brief .kur .dipesan { display: block; color: var(--green); font-weight: 600; }
+  .brief h3.own-h { color: var(--blue-ink); }
+  .brief .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .brief .acts .btn.small { flex: 1 1 auto; }
+  .brief .okline { background: var(--green-soft); color: var(--green); font-weight: 600; border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+  .brief .warnline { background: var(--amber-soft); color: var(--amber); border-radius: 12px; padding: 10px 12px; font-size: 14px; margin-bottom: 10px; }
+  .brief .asof { font-size: 13px; color: var(--muted); margin-top: 12px; }
+  .item, #f-menu, #d-prod { scroll-margin-top: 140px; }
+  .flash { animation: flash 1.6s ease-out 1; border-radius: 14px; }
+  @keyframes flash { 0%, 40% { box-shadow: 0 0 0 4px rgba(233,164,0,.55); } 100% { box-shadow: 0 0 0 4px rgba(233,164,0,0); } }
+  @media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 3px solid #E9A400; } }
+</style>
+</head>
+<body>
+
+<!-- ===================== MASUK ===================== -->
+<div id="login" class="login" hidden>
+  <div class="brand">BC-Folks · Bakmie &amp; CoffeeTiam</div>
+  <h1>Buku Staff</h1>
+  <p class="sub">Brief pagi, kas kecil, barang sampai, barang keluar, produksi dapur, dan hitung stok.</p>
+  <div id="login-msg"></div>
+  <label class="f"><span class="lb">Nama</span>
+    <select id="l-name" class="in"><option value="">Memuat…</option></select></label>
+  <label class="f"><span class="lb">PIN</span>
+    <input id="l-pin" class="in" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="Angka PIN kamu"></label>
+  <button id="l-go" class="btn" type="button">Masuk</button>
+  <p class="foot">Lupa PIN? Tanya Sicillia.</p>
+</div>
+
+<div id="boot" class="loading">Memuat…</div>
+
+<!-- ===================== HALAMAN UTAMA ===================== -->
+<div id="app" hidden>
+  <div class="sticky">
+  <header class="top">
+    <div class="top-row">
+      <div class="who"><b id="who">Halo</b><span id="today"></span></div>
+      <div class="saldo"><span>Saldo kas kecil</span><b id="saldo">–</b></div>
+      <button id="refresh" class="iconbtn" type="button" aria-label="Muat ulang data">↻</button>
+    </div>
+  </header>
+  <nav class="chips" aria-label="Loncat ke bagian">
+    <div class="chips-in">
+      <button class="chip" type="button" data-go="sec-brief">☀ Brief <i id="n-brief" hidden></i></button>
+      <button class="chip" type="button" data-go="sec-order" id="chip-order" hidden>Pembelian baru</button>
+      <button class="chip" type="button" data-go="sec-plan" id="chip-plan" hidden>Rencana produksi</button>
+      <button class="chip" type="button" data-go="sec-topup" id="chip-topup" hidden>Top up kas</button>
+      <button class="chip" type="button" data-go="sec-kas">Belanja kas</button>
+      <button class="chip" type="button" data-go="sec-sampai">Barang sampai <i id="n-orders" hidden></i></button>
+      <button class="chip" type="button" data-go="sec-keluar">Barang keluar</button>
+      <button class="chip" type="button" data-go="sec-produksi">Produksi <i id="n-plans" hidden></i></button>
+      <button class="chip" type="button" data-go="sec-opname">Hitung stok <i id="n-opname" hidden></i></button>
+    </div>
+  </nav>
+  </div>
+
+  <main>
+    <!-- ☀ · BRIEF PAGI (v1.4) -->
+    <section id="sec-brief" class="card brief">
+      <div class="sec-head"><div class="num sun">☀</div><div>
+        <h2>Brief pagi</h2><p id="b-sub">Cek ini dulu sebelum buka.</p></div></div>
+      <div id="b-body"><div class="empty">Memuat brief…</div></div>
+    </section>
+
+    <!-- ★ · PEMBELIAN BARU & ETA (hanya yang dicentang "Input pesanan") -->
+    <section id="sec-order" class="card own" hidden>
+      <div class="sec-head"><div class="num own-num">★</div><div>
+        <h2>Pembelian baru &amp; ETA</h2><p>Diisi Sicillia saat order (Shopee / supplier). Satu barang = satu kali simpan. Staff melihatnya di "Barang sampai".</p></div></div>
+      <form id="f-order" novalidate>
+        <label class="f"><span class="lb">Tanggal order</span><input id="o-tgl" class="in" type="date"></label>
+        <label class="f"><span class="lb">No pesanan <em>kalau ada</em></span>
+          <input id="o-no" class="in" type="text" maxlength="60" autocomplete="off"></label>
+        <div class="f"><span class="lb">Barang (SKU)</span>
+          <button id="o-sku" class="pick is-empty" type="button"><span>Pilih barang…</span></button>
+          <small id="o-sku-hint" class="hint" hidden></small></div>
+        <label class="f"><span class="lb">Nama barang / keterangan <em>kalau perlu</em></span>
+          <input id="o-nama" class="in" type="text" maxlength="200" placeholder="mis. Cimory 950ml" autocomplete="off"></label>
+        <div class="row2">
+          <label class="f"><span class="lb">Qty pesan</span>
+            <input id="o-qty" class="in" type="text" inputmode="decimal" autocomplete="off"><small id="o-qty-echo" class="hint" hidden></small></label>
+          <label class="f"><span class="lb">Satuan</span><select id="o-sat" class="in"></select></label>
+        </div>
+        <label class="f"><span class="lb"><span id="o-isi-lb">Isi per satuan (pcs)</span><em>supaya staff bisa cocokkan jumlah</em></span>
+          <input id="o-isi" class="in" type="text" inputmode="decimal" placeholder="mis. 50" autocomplete="off">
+          <small id="o-isi-eq" class="hint" hidden></small></label>
+        <label class="f"><span class="lb">Total bayar <em>otomatis masuk Finance</em></span>
+          <div class="rp"><input id="o-total" class="in" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div></label>
+        <label class="f"><span class="lb">Dibayar dari</span><select id="o-bayar" class="in"></select></label>
+        <label class="f"><span class="lb">Estimasi tiba</span><input id="o-eta" class="in" type="date"></label>
+        <label class="f"><span class="lb">Kategori Finance</span><select id="o-kat" class="in"></select></label>
+        <div id="o-msg"></div>
+        <button class="btn" type="submit">Simpan pembelian</button>
+      </form>
+    </section>
+
+    <!-- ★ · RENCANA PRODUKSI (hanya yang dicentang "Input pesanan") -->
+    <section id="sec-plan" class="card own" hidden>
+      <div class="sec-head"><div class="num own-num">★</div><div>
+        <h2>Rencana produksi</h2><p>Diisi Sicillia. Staff melihat resepnya di "Produksi dapur", mencentang bahan satu per satu, lalu mengisi berat jadi.</p></div></div>
+      <form id="f-plan" novalidate>
+        <label class="f"><span class="lb">Tanggal produksi</span><input id="pl-tgl" class="in" type="date"></label>
+        <label class="f"><span class="lb">Jenis</span><select id="pl-jenis" class="in"></select></label>
+        <label class="f"><span class="lb">Produk</span><select id="pl-produk" class="in"></select></label>
+        <label class="f"><span class="lb">Bahan patokan</span><select id="pl-pat" class="in"></select></label>
+        <label class="f"><span class="lb" id="pl-qty-lb">Qty</span>
+          <input id="pl-qty" class="in" type="text" inputmode="decimal" autocomplete="off"><small id="pl-qty-echo" class="hint" hidden></small></label>
+        <label class="f"><span class="lb">Pesan untuk staff <em>kalau ada</em></span>
+          <input id="pl-ket" class="in" type="text" maxlength="300" autocomplete="off"></label>
+        <div id="pl-msg"></div>
+        <button class="btn" type="submit">Simpan rencana produksi</button>
+      </form>
+    </section>
+
+    <!-- ★ · TOP UP KAS KECIL (hanya Sicillia) -->
+    <section id="sec-topup" class="card own" hidden>
+      <div class="sec-head"><div class="num own-num">★</div><div>
+        <h2>Top up kas kecil</h2><p>Isi setiap kali Sicillia menambah uang kas kecil. Masuk ke kolom Masuk Rp, saldo di atas langsung bertambah.</p></div></div>
+      <form id="f-topup" novalidate>
+        <label class="f"><span class="lb">Tanggal</span><input id="t-tgl" class="in" type="date"></label>
+        <label class="f"><span class="lb">Uang masuk</span>
+          <div class="rp"><input id="t-rp" class="in" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div></label>
+        <label class="f"><span class="lb">Jenis</span><select id="t-jenis" class="in">
+          <option>Top up dari Sicillia</option><option>Deposit staff</option><option>Lainnya (tulis di keterangan)</option></select></label>
+        <label class="f"><span class="lb">Keterangan <em>kalau perlu</em></span>
+          <input id="t-ket" class="in" type="text" maxlength="150" placeholder="mis. tunai ke Adit / transfer" autocomplete="off"></label>
+        <div class="f"><span class="lb">Foto bukti <em>kalau ada</em></span><div id="t-foto"></div></div>
+        <div id="t-msg"></div>
+        <button class="btn" type="submit">Simpan uang masuk</button>
+      </form>
+    </section>
+
+    <!-- 1 · KAS KECIL -->
+    <section id="sec-kas" class="card">
+      <div class="sec-head"><div class="num">1</div><div>
+        <h2>Belanja pakai kas kecil</h2><p>Sawi, es batu, galon, tisu, parkir… isi setiap habis belanja.</p></div></div>
+      <form id="f-kas" novalidate>
+        <label class="f"><span class="lb">Tanggal</span><input id="k-tgl" class="in" type="date"></label>
+        <label class="f"><span class="lb">Beli apa / di mana</span>
+          <input id="k-ket" class="in" type="text" maxlength="200" placeholder="mis. Es batu 1 bal" autocomplete="off"></label>
+        <label class="f"><span class="lb">Keluar uang</span>
+          <div class="rp"><input id="k-rp" class="in" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div></label>
+        <div class="row2">
+          <label class="f"><span class="lb">Qty</span>
+            <input id="k-qty" class="in" type="text" inputmode="decimal" placeholder="1" autocomplete="off"><small id="k-qty-echo" class="hint" hidden></small></label>
+          <label class="f"><span class="lb">Satuan</span><select id="k-sat" class="in"></select></label>
+        </div>
+        <div class="f"><span class="lb">Barang masuk stok?</span>
+          <button id="k-sku" class="pick is-empty" type="button"><span>Bukan barang stok</span></button>
+          <small id="k-sku-hint" class="hint">Pilih hanya kalau barangnya masuk stok (galon, es batu, telur…).</small></div>
+        <div class="f"><span class="lb">Foto nota</span><div id="k-nota"></div></div>
+        <label class="check"><input id="k-tanpa" type="checkbox"><span>Nota tidak ada / hilang</span></label>
+        <div class="f"><span class="lb">Foto barang <em>kalau ada</em></span><div id="k-barang"></div></div>
+        <label class="f"><span class="lb">Catatan <em>kalau ada</em></span>
+          <input id="k-cat" class="in" type="text" maxlength="300" placeholder="mis. 1 botol = 270 ml" autocomplete="off"></label>
+        <div id="k-msg"></div>
+        <button class="btn" type="submit">Simpan belanja</button>
+      </form>
+      <h3>Terakhir dicatat</h3>
+      <ul id="r-kas" class="recent"></ul>
+    </section>
+
+    <!-- 2 · BARANG SAMPAI -->
+    <section id="sec-sampai" class="card">
+      <div class="sec-head"><div class="num">2</div><div>
+        <h2>Barang sampai</h2><p>Cek barangnya, foto, lalu pilih hasilnya di pesanan yang cocok.</p></div></div>
+      <div id="orders"></div>
+    </section>
+
+    <!-- 3 · BARANG KELUAR -->
+    <section id="sec-keluar" class="card">
+      <div class="sec-head"><div class="num">3</div><div>
+        <h2>Barang keluar</h2><p>Yang dibuang: expired, busuk, rusak, tumpah, salah buat, tester. Bukan yang terjual atau dipakai produksi.</p></div></div>
+      <form id="f-keluar" novalidate>
+        <label class="f"><span class="lb">Tanggal</span><input id="x-tgl" class="in" type="date"></label>
+        <div class="f"><span class="lb">Barang</span>
+          <button id="x-sku" class="pick is-empty" type="button"><span>Pilih barang…</span></button>
+          <small id="x-sku-hint" class="hint" hidden></small></div>
+        <div class="row2">
+          <label class="f"><span class="lb">Qty</span>
+            <input id="x-qty" class="in" type="text" inputmode="decimal" placeholder="0" autocomplete="off"><small id="x-qty-echo" class="hint" hidden></small></label>
+          <label class="f"><span class="lb">Satuan</span><select id="x-sat" class="in"></select></label>
+        </div>
+        <label class="f"><span class="lb">Alasan</span><select id="x-alasan" class="in"></select></label>
+        <label class="f"><span class="lb">Apa yang terjadi <em>kalau perlu</em></span>
+          <input id="x-ket" class="in" type="text" maxlength="300" autocomplete="off"></label>
+        <div class="f"><span class="lb">Foto <em>kalau ada</em></span><div id="x-foto"></div></div>
+        <div id="x-msg"></div>
+        <button class="btn" type="submit">Simpan barang keluar</button>
+      </form>
+      <h3>Terakhir dicatat</h3>
+      <ul id="r-keluar" class="recent"></ul>
+    </section>
+
+    <!-- 4 · PRODUKSI -->
+    <section id="sec-produksi" class="card">
+      <div class="sec-head"><div class="num">4</div><div>
+        <h2>Produksi dapur</h2><p>Isi hasilnya setelah selesai masak, lalu tandai selesai.</p></div></div>
+
+      <h3 style="margin-top:0">Rencana produksi</h3>
+      <div id="plans"></div>
+
+      <div id="d-prod">
+        <h3>Catat produksi</h3>
+        <p class="hint" style="margin:-4px 0 10px">Kuah, topping, isian, seduhan teh, lumpia &amp; pangsit — semua dicatat di sini. Pilih yang dibuat, cek bahan patokannya, isi jumlahnya, lalu centang setiap bahan yang sudah dimasukkan.</p>
+        <form id="f-prod" novalidate>
+          <label class="f"><span class="lb">Tanggal</span><input id="p-tgl" class="in" type="date"></label>
+          <label class="f"><span class="lb">Yang dibuat</span><select id="p-produk" class="in"></select>
+            <small id="p-jenis-hint" class="hint"></small></label>
+          <label class="f" id="p-pat-f"><span class="lb">Bahan patokan</span><select id="p-pat" class="in"></select>
+            <small id="p-pat-hint" class="hint"></small></label>
+          <label class="f"><span class="lb" id="p-qty-lb">Qty</span>
+            <input id="p-qty" class="in" type="text" inputmode="decimal" autocomplete="off"><small id="p-qty-echo" class="hint" hidden></small></label>
+          <div id="p-resep"></div>
+          <div id="p-msg"></div>
+          <button class="btn" type="submit" id="p-btn">Simpan</button>
+        </form>
+        <h3>Kuah &amp; teh terakhir dicatat</h3>
+        <ul id="r-menu" class="recent"></ul>
+
+    </section>
+
+    <!-- 5 · HITUNG STOK -->
+    <section id="sec-opname" class="card">
+      <div class="sec-head"><div class="num">5</div><div>
+        <h2>Hitung stok</h2><p>Tiap tutup: hitung barang harian. Tiap Jumat: hitung semua barang. Hasil hitung jadi stok awal besok.</p></div></div>
+      <form id="f-opname" novalidate>
+        <label class="f"><span class="lb">Tanggal hitung</span><input id="s-tgl" class="in" type="date"></label>
+        <div class="seg f" id="s-mode">
+          <button type="button" data-mode="A" aria-pressed="true">Harian</button>
+          <button type="button" data-mode="ALL" aria-pressed="false">Jumat · semua barang</button>
+        </div>
+        <p class="hint" id="s-info" style="margin:0 0 4px"></p>
+        <div id="s-list"></div>
+        <label class="f" style="margin-top:14px"><span class="lb">Catatan <em>kalau ada</em></span>
+          <input id="s-cat" class="in" type="text" maxlength="200" autocomplete="off"></label>
+        <div id="s-msg"></div>
+        <button class="btn" type="submit">Simpan hitungan</button>
+      </form>
+      <div id="s-pack-wrap" hidden>
+        <h3>Buka pack baru</h3>
+        <p class="hint" style="margin:-4px 0 10px">Tekan setiap kali membuka pack baru. Stok berkurang 1 pack, jadi pack yang sudah dibuka tidak perlu dihitung.</p>
+        <div id="s-packs"></div>
+        <div id="s-pack-msg"></div>
+      </div>
+    </section>
+
+    <p class="foot">Salah isi? Jangan dicatat dua kali — kabari Sicillia.<br>
+      <button id="logout" class="link" type="button">Keluar dari akun ini</button><br><span id="ver"></span></p>
+  </main>
+</div>
+
+<!-- pemilih barang -->
+<div id="picker" class="sheet" hidden>
+  <div class="sheet-in" role="dialog" aria-modal="true" aria-labelledby="pk-title">
+    <div class="sheet-head"><b id="pk-title"></b><button id="pk-close" class="link" type="button">Tutup</button></div>
+    <div class="sheet-search"><input id="pk-q" class="in" type="search" placeholder="Ketik untuk mencari…" autocomplete="off"></div>
+    <div id="pk-list" class="sheet-list"></div>
+  </div>
+</div>
+<div id="toast" hidden role="status"></div>
+
+<script>
+(function () {
+  'use strict';
+  var S = { token: null, name: '', boot: null };
+  var KEY = 'bcfolks_staff_v1';
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- alat kecil ---------- */
+  function h(tag, attrs) {
+    var e = document.createElement(tag), k;
+    attrs = attrs || {};
+    for (k in attrs) {
+      var v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'text') e.textContent = v;
+      else if (k === 'class') e.className = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (var i = 2; i < arguments.length; i++) add(e, arguments[i]);
+    return e;
+  }
+  function add(e, c) {
+    if (c === null || c === undefined || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { add(e, x); }); return; }
+    e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  function clear(e) { while (e.firstChild) e.removeChild(e.firstChild); }
+  function store(v) { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) {} }
+  function stored() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { return null; } }
+  function fmt(n) { return Number(n).toLocaleString('id-ID', { maximumFractionDigits: 3 }); }
+  function digits(s) { return String(s || '').replace(/\D/g, ''); }
+
+  /** "1,5" → 1.5 · "2.000" → 2000 · "1.5" → 1.5 · kosong → '' · tidak terbaca → NaN */
+  function parseNum(s) {
+    s = String(s || '').replace(/\s/g, '');
+    if (!s) return '';
+    if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) s = s.replace(/\./g, '').replace(',', '.');
+    else s = s.replace(',', '.');
+    return /^\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+  }
+  function echoNum(input, out) {
+    input.addEventListener('input', function () {
+      var raw = input.value, n = parseNum(raw);
+      if (/[.,]/.test(raw) && n !== '' && !isNaN(n)) { out.textContent = 'Terbaca: ' + fmt(n); out.hidden = false; }
+      else if (raw && isNaN(n)) { out.textContent = 'Isi dengan angka saja'; out.hidden = false; }
+      else out.hidden = true;
+    });
+  }
+
+  /** Tulis tanggal terpilih dengan kata ("Jumat, 9 Okt") di samping label, supaya tidak salah baca. */
+  function dateEcho(input) {
+    var lb = input.parentNode.querySelector('.lb'), em = h('em', {});
+    lb.appendChild(em);
+    function draw() {
+      var p = String(input.value).split('-');
+      if (p.length !== 3) { em.textContent = ''; return; }
+      var txt = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
+      em.textContent = S.boot && input.value === S.boot.today ? 'Hari ini · ' + txt : txt;
+    }
+    input.addEventListener('input', draw); input.addEventListener('change', draw);
+    input._draw = draw; draw();
+  }
+  document.addEventListener('input', function (e) {
+    var f = e.target.closest && e.target.closest('form'), er = f && f.querySelector('.msg.err');
+    if (er) er.parentNode.removeChild(er);
+  });
+
+  var toastT;
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { t.hidden = true; }, 2600);
+  }
+  function msg(box, kind, text, sub) {
+    clear(box);
+    if (!text) return;
+    box.appendChild(h('div', { class: 'msg ' + kind, role: kind === 'err' ? 'alert' : 'status' }, text, sub ? h('small', { text: sub }) : null));
+    if (kind === 'err') box.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+  /** Tampilkan hasil simpan + jawaban kolom otomatis dari buku. */
+  function saved(box, res, what) {
+    var cek = String((res && res.cek) || '');
+    if (/^⚠/.test(cek)) msg(box, 'warn', 'Tersimpan, tapi ada peringatan: ' + cek.replace(/^⚠\s*/, ''), 'Kabari Sicillia supaya dibetulkan.');
+    else msg(box, 'ok', '✓ ' + what + ' tersimpan' + (cek ? ' — ' + cek.replace(/^✓\s*/, '') : ''));
+    toast('Tersimpan ✓');
+  }
+
+  /* ---------- sambungan ke server ---------- */
+  function call(action, payload) {
+    return new Promise(function (resolve, reject) {
+      var req = { action: action, token: S.token };
+      for (var k in (payload || {})) req[k] = payload[k];
+      google.script.run
+        .withSuccessHandler(function (r) {
+          if (r && r.ok) return resolve(r.data);
+          var e = new Error((r && r.error) || 'Gagal. Coba lagi.'); e.code = (r && r.code) || ''; reject(e);
+        })
+        .withFailureHandler(function () {
+          var e = new Error('Tidak tersambung. Cek internet, lalu tekan simpan lagi.'); e.net = true; reject(e);
+        })
+        .api(req);
+    });
+  }
+  function hash(str) { var x = 5381; for (var i = 0; i < str.length; i++) x = ((x << 5) + x + str.charCodeAt(i)) | 0; return (x >>> 0).toString(36); }
+  function nonce() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  /** Kirim satu isian. Kiriman yang sama tidak akan tercatat dua kali walau ditekan ulang. */
+  function submit(form, box, action, data, onOk) {
+    var btn = form.querySelector('button[type=submit]');
+    if (btn.disabled) return;
+    if (!form._nonce) form._nonce = nonce();
+    var rid = form._nonce + '-' + hash(JSON.stringify(data));
+    var label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Menyimpan…';
+    msg(box, '', '');
+    call(action, { data: data, rid: rid }).then(function (out) {
+      btn.disabled = false; btn.textContent = label; form._nonce = null;
+      S.boot.dyn = out.dyn;
+      onOk(out.res);
+      renderDyn();
+      if (/^(menu|produksi|selesai|opname|keluar|buka)$/.test(action)) loadBrief(false);
+    }).catch(function (e) {
+      btn.disabled = false; btn.textContent = label;
+      if (e.code === 'AUTH') return toLogin(e.message);
+      msg(box, 'err', e.message);
+    });
+  }
+
+  /* ---------- aturan satuan (sama dengan kolom "Cek stok") ---------- */
+  function unitRule(kind, sku) {
+    var s = String(sku || '');
+    if (!s) return { stock: false, allowed: null };
+    var nonStock = kind === 'kas' ? s.slice(0, 4) === 'X001' : s.charAt(0) === 'X';
+    if (nonStock) return { stock: false, allowed: null };
+    var u = S.boot.st.units[s.split(' ')[0]];
+    if (!u) return { stock: true, allowed: null };
+    var cand = [u[0], u[1]].concat(String(u[0]).split('/'));
+    if (kind === 'keluar') { if (u[1] === 'gram') cand.push('kilogram'); if (u[1] === 'ml') cand.push('liter'); }
+    var allowed = [];
+    cand.forEach(function (c) { if (c && allowed.indexOf(c) < 0 && S.boot.st.satuan.indexOf(c) >= 0) allowed.push(c); });
+    return { stock: true, allowed: allowed.length ? allowed : null };
+  }
+  function fillSelect(sel, items, placeholder, keep) {
+    var prev = keep ? sel.value : '';
+    clear(sel);
+    if (placeholder !== null) sel.appendChild(h('option', { value: '', text: placeholder }));
+    items.forEach(function (it) {
+      var o = typeof it === 'string' ? { value: it, label: it } : it;
+      sel.appendChild(h('option', { value: o.value, text: o.label }));
+    });
+    sel.value = items.some(function (it) { return (it.value || it) === prev; }) ? prev : '';
+  }
+  function applyUnit(kind, sku, sel, hint) {
+    var rule = unitRule(kind, sku), st = S.boot.st;
+    if (rule.allowed) {
+      fillSelect(sel, rule.allowed, rule.allowed.length > 1 ? 'Pilih…' : null, true);
+      // belanja: satuan beli (satuan awal) dipilihkan; barang keluar: staff memilih sendiri
+      if (!sel.value && (rule.allowed.length === 1 || kind === 'kas')) sel.value = rule.allowed[0];
+      hint.className = 'hint auto'; hint.hidden = false;
+      hint.textContent = (kind === 'kas' ? 'Masuk stok. ' : 'Memotong stok. ') + 'Satuan: ' + rule.allowed.join(' atau ');
+    } else {
+      fillSelect(sel, st.satuan, 'Pilih…', true);
+      hint.className = 'hint';
+      if (sku && rule.stock) { hint.hidden = false; hint.textContent = 'Barang ini belum ada di Daftar Bahan Baku — kabari Sicillia.'; }
+      else if (sku) { hint.hidden = false; hint.textContent = 'Bukan barang stok (tidak dihitung).'; }
+      else if (kind === 'kas') { hint.hidden = false; hint.textContent = 'Pilih hanya kalau barangnya masuk stok (galon, es batu, telur…).'; }
+      else hint.hidden = true;
+    }
+  }
+
+  /** Pembelian: semua satuan boleh; satuan stok ditaruh paling atas dan diberi petunjuk. */
+  function softUnit(sku, reset) {
+    var rule = unitRule('kas', sku), st = S.boot.st, sel = $('o-sat'), hint = $('o-sku-hint');
+    var first = rule.allowed || [];
+    fillSelect(sel, first.concat(st.satuan.filter(function (u) { return first.indexOf(u) < 0; })), 'Pilih…', !reset);
+    if (!sel.value && first.length) sel.value = first[0];
+    hint.hidden = !sku; hint.className = first.length ? 'hint auto' : 'hint';
+    hint.textContent = !sku ? '' : first.length ? 'Satuan stok: ' + first.join(' atau ')
+      : rule.stock ? 'Barang ini belum ada di Daftar Bahan Baku.' : 'Bukan barang stok (tidak dihitung).';
+    isiRefresh(!!reset);
+  }
+  var WEIGHT = ['gram', 'ml', 'kilogram', 'liter'];
+  /** Isi per satuan beli menurut daftar bahan di buku (mis. 1 bungkus/paket = 50 satuan). */
+  function konvFor(sku, sat) {
+    var k = (S.boot.st.konv || {})[String(sku || '').split(' ')[0]];
+    if (!k || !sat || k[1] === k[3] || WEIGHT.indexOf(k[1]) >= 0) return null;
+    return sat === k[1] || k[1].split('/').indexOf(sat) >= 0 ? { n: k[2] / k[0], u: k[3] } : null;
+  }
+  /** Persamaan satuan beli ↔ pcs di form pembelian. */
+  function isiRefresh(prefill) {
+    var sat = $('o-sat').value, k = konvFor(F.oSku.get(), sat), unit = k ? k.u : 'pcs', eq = $('o-isi-eq');
+    $('o-isi-lb').textContent = 'Isi per ' + (sat || 'satuan') + ' (' + unit + ')';
+    if (prefill) $('o-isi').value = k ? fmt(k.n) : '';
+    var q = parseNum($('o-qty').value), isi = parseNum($('o-isi').value);
+    if (q > 0 && isi > 0) { eq.hidden = false; eq.className = 'hint auto'; eq.textContent = fmt(q) + ' ' + sat + ' = ' + fmt(q * isi) + ' ' + unit; }
+    else if (k) { eq.hidden = false; eq.className = 'hint'; eq.textContent = 'Menurut daftar bahan: 1 ' + sat + ' = ' + fmt(k.n) + ' ' + unit + '. Ganti kalau isi kemasannya beda.'; }
+    else eq.hidden = true;
+    isiRefresh.unit = unit;
+  }
+
+  /* ---------- pemilih dengan pencarian ---------- */
+  var pk = { onPick: null, items: [], value: '' };
+  function openPicker(title, items, value, onPick) {
+    pk.items = items; pk.onPick = onPick; pk.value = value;
+    $('pk-title').textContent = title; $('pk-q').value = '';
+    drawPicker(''); $('picker').hidden = false; document.body.style.overflow = 'hidden';
+  }
+  function closePicker() { $('picker').hidden = true; document.body.style.overflow = ''; }
+  function drawPicker(q) {
+    var list = $('pk-list'); clear(list); q = q.toLowerCase().trim();
+    var n = 0;
+    pk.items.forEach(function (it) {
+      if (q && it.label.toLowerCase().indexOf(q) < 0) return;
+      n++;
+      list.appendChild(h('button', { class: 'opt' + (it.value === pk.value ? ' sel' : ''), type: 'button',
+        onclick: function () { closePicker(); pk.onPick(it.value); } }, it.label, it.sub ? h('small', { text: it.sub }) : null));
+    });
+    if (!n) list.appendChild(h('div', { class: 'empty', text: 'Tidak ketemu. Coba kata lain.' }));
+  }
+  function pickField(btn, title, emptyLabel, getItems, onChange) {
+    var state = { value: '' };
+    function set(v) {
+      state.value = v;
+      btn.firstChild.textContent = v ? v.trim() : emptyLabel;
+      btn.className = 'pick' + (v ? '' : ' is-empty');
+      onChange(v);
+    }
+    btn.addEventListener('click', function () { openPicker(title, getItems(), state.value, set); });
+    return { get: function () { return state.value; }, set: set };
+  }
+  function skuItems(withNone) {
+    var units = S.boot.st.units, out = [];
+    if (withNone) out.push({ value: '', label: 'Bukan barang stok', sub: 'Belanja lain — tidak masuk stok' });
+    S.boot.st.sku.forEach(function (s) {
+      var u = units[s.split(' ')[0]];
+      out.push({ value: s, label: s.trim(), sub: u && u[0] ? 'Satuan: ' + (u[0] === u[1] || !u[1] ? u[0] : u[0] + ' / ' + u[1]) : '' });
+    });
+    return out;
+  }
+
+  /* ---------- foto ---------- */
+  function photoField(host, label) {
+    var state = { data: null };
+    var input = h('input', { type: 'file', accept: 'image/*' });
+    var shot = h('button', { class: 'shot', type: 'button', text: '📷 ' + label, onclick: function () { input.click(); } });
+    var img = h('img', { alt: 'Foto terpilih', hidden: true });
+    var del = h('button', { class: 'del', type: 'button', 'aria-label': 'Hapus foto', hidden: true, text: '✕',
+      onclick: function () { set(null); } });
+    function set(data) {
+      state.data = data; input.value = '';
+      img.hidden = del.hidden = !data;
+      if (data) img.src = data;
+      shot.textContent = data ? 'Ganti foto' : '📷 ' + label;
+      if (state.onchange) state.onchange(!!data);
+    }
+    input.addEventListener('change', function () {
+      var f = input.files && input.files[0];
+      if (!f) return;
+      shot.textContent = 'Menyiapkan foto…';
+      shrink(f).then(set, function () { set(null); toast('Foto tidak terbaca. Coba lagi.'); });
+    });
+    host.className = 'photo'; clear(host);
+    add(host, [input, shot, img, del]);
+    return { get: function () { return state.data ? { data: state.data } : null; }, clear: function () { set(null); },
+             onChange: function (fn) { state.onchange = fn; } };
+  }
+  /** Kecilkan foto supaya cepat terkirim lewat sinyal HP. */
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), im = new Image();
+      im.onload = function () {
+        try {
+          var max = 1600, k = Math.min(1, max / Math.max(im.width, im.height));
+          var c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(im.width * k)); c.height = Math.max(1, Math.round(im.height * k));
+          c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL('image/jpeg', 0.72));
+        } catch (e) { reject(e); }
+      };
+      im.onerror = function () { URL.revokeObjectURL(url); reject(new Error('img')); };
+      im.src = url;
+    });
+  }
+
+  /* ---------- masuk / keluar ---------- */
+  function toLogin(note) {
+    S.token = null; store(null);
+    $('app').hidden = true; $('boot').hidden = true; $('login').hidden = false;
+    msg($('login-msg'), note ? 'err' : '', note || '');
+    call('names').then(function (d) {
+      fillSelect($('l-name'), d.names, 'Pilih nama…', false);
+    }).catch(function (e) { msg($('login-msg'), 'err', e.message); fillSelect($('l-name'), [], 'Tidak bisa memuat nama', false); });
+  }
+  function doLogin() {
+    var name = $('l-name').value, pin = $('l-pin').value.trim(), btn = $('l-go');
+    if (!name) return msg($('login-msg'), 'err', 'Pilih nama dulu.');
+    if (!/^\d{4,8}$/.test(pin)) return msg($('login-msg'), 'err', 'PIN berupa 4–8 angka.');
+    btn.disabled = true; btn.textContent = 'Memeriksa…';
+    call('login', { name: name, pin: pin }).then(function (d) {
+      btn.disabled = false; btn.textContent = 'Masuk'; $('l-pin').value = '';
+      S.token = d.token; S.name = d.name; store({ token: d.token, name: d.name });
+      start(false);
+    }).catch(function (e) { btn.disabled = false; btn.textContent = 'Masuk'; msg($('login-msg'), 'err', e.message); });
+  }
+  var inited = false;
+  function start(fresh) {
+    $('login').hidden = true;
+    if (!S.boot) { $('boot').hidden = false; $('app').hidden = true; }
+    $('refresh').classList.add('spin');
+    return call('boot', { fresh: !!fresh }).then(function (d) {
+      S.boot = d; S.name = d.name;
+      $('boot').hidden = true; $('app').hidden = false; $('refresh').classList.remove('spin');
+      if (!inited) { initForms(); inited = true; }
+      renderStatic(); renderDyn();
+      loadBrief(!!fresh);
+      return true;
+    }).catch(function (e) {
+      $('refresh').classList.remove('spin');
+      if (e.code === 'AUTH') { toLogin(e.message); return false; }
+      if (S.boot) { toast(e.message); return false; }
+      $('boot').hidden = false; clear($('boot'));
+      add($('boot'), [h('div', { class: 'msg err', text: e.message }),
+        h('button', { class: 'btn', type: 'button', text: 'Coba lagi', onclick: function () { $('boot').textContent = 'Memuat…'; start(false); } })]);
+      return false;
+    });
+  }
+
+  /* ---------- tampilkan data ---------- */
+  var F = {};   // pegangan ke isian yang punya keadaan (foto, pemilih)
+
+  function renderStatic() {
+    var b = S.boot, st = b.st, p = b.today.split('-');
+    $('who').textContent = 'Halo, ' + b.name;
+    $('today').textContent = new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+    $('ver').textContent = 'Buku Staff v' + b.version;
+    if (!OP.init) { OP.init = true; if (new Date(+p[0], +p[1] - 1, +p[2]).getDay() === 5) OP.mode = 'ALL'; }   // Jumat: langsung daftar semua barang
+    ['k-tgl', 'x-tgl', 'p-tgl', 's-tgl'].forEach(function (id) {
+      var e = $(id); e.max = b.today; if (!e.value) e.value = b.today;
+      if (!e._draw) dateEcho(e); else e._draw();
+    });
+
+    var own = !!b.owner;
+    ['sec-order', 'chip-order', 'sec-plan', 'chip-plan', 'sec-topup', 'chip-topup'].forEach(function (id) { $(id).hidden = !own; });
+    if (own) {
+      var ot = $('o-tgl'), oe = $('o-eta'), pt = $('pl-tgl');
+      var tt = $('t-tgl'); tt.max = b.today; if (!tt.value) tt.value = b.today;
+      if (!tt._draw) dateEcho(tt); else tt._draw();
+      ot.max = b.today; if (!ot.value) ot.value = b.today;
+      oe.min = ot.value;
+      if (!pt.value) pt.value = b.today;
+      [ot, oe, pt].forEach(function (e) { if (!e._draw) dateEcho(e); else e._draw(); });
+      softUnit(F.oSku.get(), false);
+      fillSelect($('o-bayar'), st.bayar, 'Kosong = SeaBank 8309', true);
+      fillSelect($('o-kat'), st.kategori, 'Otomatis dari SKU', true);
+      fillSelect($('pl-jenis'), st.jenis, null, true);
+      if (!$('pl-jenis').value) $('pl-jenis').value = st.jenis.filter(function (j) { return /^BARU/i.test(j); })[0] || st.jenis[0] || '';
+      fillSelect($('pl-produk'), st.produk, 'Pilih…', true);
+      planChanged();
+    }
+
+    applyUnit('kas', F.kSku.get(), $('k-sat'), $('k-sku-hint'));
+    applyUnit('keluar', F.xSku.get(), $('x-sat'), $('x-sku-hint'));
+    fillSelect($('x-alasan'), st.alasan.filter(function (a) { return !/^buka pack/i.test(a); }), 'Pilih alasan…', true);   // "Buka pack baru" hanya lewat tombol di bagian Hitung stok
+
+    // v1.4.4 — satu form untuk semua produk dapur. Kuah & teh (tanpa standar porsi) masuk tabel buatan harian, sisanya ke daftar produksi.
+    var dapur = st.produk.map(codeOf);
+    S.harian = {};
+    st.menus.forEach(function (m) { if (dapur.indexOf(m.code) >= 0 && (st.std || []).indexOf(m.code) < 0) S.harian[m.code] = m.label; });
+    fillSelect($('p-produk'), st.produk, 'Pilih…', true);
+    prodChanged();
+  }
+
+  function codeOf(label) { return String(label || '').split(' — ')[0].trim(); }
+  function isHarian(label) { return !!(S.harian || {})[codeOf(label)]; }
+  function rowsOf(label) { var rx = S.boot.st.rx || {}, hd = (rx.rh || {})[label]; return hd ? ((rx.rb || {})[hd.code] || []) : []; }
+  /** Jenis ditentukan oleh produk: lumpia & pangsit (resepnya ada kulit) = LANJUTAN dari isian; lainnya = BARU. */
+  function isLanjut(label) { return !isHarian(label) && rowsOf(label).some(function (r) { return /^kulit/i.test(r.n); }); }
+  function jenisOpt(lanj) {
+    var re = lanj ? /^(LANJ|BUNG)/i : /^BARU/i;
+    return (S.boot.st.jenis || []).filter(function (j) { return re.test(j); })[0] || (lanj ? 'LANJUTAN (lumpia / pangsit dari isian)' : 'BARU (dari bahan mentah)');
+  }
+  /** Bahan patokan bawaan: kuah & teh = air, lainnya = ayam. */
+  function patDefault(label) {
+    var names = rowsOf(label).map(function (r) { return r.n; });
+    var re = isHarian(label) ? /air/i : /ayam/i;
+    return names.filter(function (n) { return re.test(n); })[0] || names[0] || '';
+  }
+  var PROD_LAST = '';
+  /** Produk dipilih: jenis otomatis, bahan patokan diisi bawaannya. */
+  function prodChanged() {
+    var label = $('p-produk').value, lanj = isLanjut(label), ganti = label !== PROD_LAST;
+    PROD_LAST = label;
+    $('p-pat-f').hidden = !label || lanj;
+    fillSelect($('p-pat'), lanj ? [] : (S.boot.st.resep[codeOf(label)] || []), null, true);
+    if (ganti || !$('p-pat').value) $('p-pat').value = lanj ? '' : patDefault(label);
+    $('p-jenis-hint').textContent = !label ? '' : lanj
+      ? 'LANJUTAN — dibungkus dari isian ayam yang sudah dibuat.'
+      : 'BARU — dimasak dari bahan mentah.';
+    patChanged();
+  }
+  /** Bahan patokan berubah: label jumlah, tombol dan resep ikut. */
+  function patChanged() {
+    var label = $('p-produk').value, har = isHarian(label), lanj = isLanjut(label), pat = $('p-pat').value;
+    $('p-qty-lb').textContent = !label ? 'Qty' : lanj ? 'Isian ayam yang diambil (gram)' : 'Jumlah ' + (pat || 'bahan patokan') + ' yang dipakai';
+    $('p-pat-hint').textContent = label && !lanj ? 'Bahan lain dihitung otomatis dari resep.' : '';
+    $('p-btn').textContent = !label ? 'Simpan' : har ? 'Simpan' : 'Simpan ke daftar produksi';
+    drawResep();
+  }
+  /** Resep untuk form produksi — hitungannya sama dengan rumus tabel ② di buku dan planRecipe_ di server. */
+  function recipeOf(label, pin, q) {
+    var rx = S.boot.st.rx || {}, hd = (rx.rh || {})[label], rows = rowsOf(label), har = isHarian(label);
+    if (!hd || !rows.length) return { items: [], tp: 0 };
+    var low = function (s) { return String(s).toLowerCase(); };
+    var kulit = rows.filter(function (r) { return /^kulit/.test(low(r.n)); });
+    var lanj = !har && kulit.length > 0;
+    var pat = pin && rows.some(function (r) { return low(r.n) === low(pin); }) ? pin : patDefault(label), sp = 0;
+    rows.some(function (r) { if (low(r.n) === low(pat)) { sp = r.q; return true; } return false; });
+    var gp = (rx.gp || {})[hd.code] || (hd.por === 0 ? 1 : hd.gr / hd.por);
+    var f = lanj ? (hd.gr ? q / hd.gr : 0) : (sp ? q / sp : 0);
+    var tgr = Math.round(hd.gr * f), tp = gp ? Math.round(tgr / gp) : 0;
+    var r2 = function (v) { return Math.round(v * 100) / 100; };
+    if (lanj) {
+      var out = [{ n: 'Isian Ayam Lumpia & Pangsit', q: q, u: 'gram', star: true, t: '' }];
+      out.push({ n: kulit[0].n, q: tp, u: 'lembar', star: false, t: '1 kulit = 1 pcs' });
+      return { items: out, tp: tp, lanj: true, gp: gp };
+    }
+    return { tp: tp, tgr: tgr, gp: gp, items: rows.map(function (r) {
+      return { n: r.n, q: r2(r.q * f), u: r.u, star: low(r.n) === low(pat), t: r.t };
+    }) };
+  }
+  var PR = { key: '', c: {}, items: [] };   // centang di form Catat produksi
+  function drawResep() {
+    var host = $('p-resep'); clear(host); PR.items = [];
+    var label = $('p-produk').value; if (!label) return;
+    var key = label + '|' + $('p-pat').value;
+    if (PR.key !== key) PR = { key: key, c: {}, items: [] };
+    var q = parseNum($('p-qty').value), adaQ = q !== '' && !isNaN(q) && q > 0;
+    var rc = recipeOf(label, $('p-pat').value, adaQ ? q : 0), items = rc.items;
+    PR.items = items;
+    if (!items.length) { host.appendChild(h('small', { class: 'hint', text: 'Resep produk ini belum ada di buku. Kabari Sicillia.' })); return; }
+    if (!rc.lanj && !isHarian(label) && adaQ && rc.tgr) {
+      var sat = codeOf(label) === 'BO005' ? ' pcs lumpia / pangsit' : ' porsi';
+      host.appendChild(h('div', { class: 'target' }, 'Perkiraan hasil: ', h('b', { text: fmt(rc.tgr) + ' g' }), ' · ≈ ' + fmt(rc.tp) + sat));
+    }
+    if (rc.lanj) {
+      host.appendChild(h('div', { class: 'target' }, adaQ
+        ? ['Perkiraan jadi: ', h('b', { text: fmt(rc.tp) + ' pcs' }), ' · siapkan ', h('b', { text: fmt(rc.tp) + ' lembar ' + items[1].n.toLowerCase() }), ' (' + fmt(rc.gp) + ' g isian per pcs)']
+        : 'Isi berat isian yang diambil — jumlah jadi dan kulit yang perlu disiapkan muncul otomatis.'));
+    }
+    var prog = h('em', { class: 'nw' }), list = h('ul', { class: 'ing' });
+    function drawProg() { prog.textContent = items.filter(function (it) { return PR.c[it.n]; }).length + ' dari ' + items.length; }
+    items.forEach(function (it) {
+      var cb = h('input', { type: 'checkbox' }); cb.checked = !!PR.c[it.n];
+      cb.addEventListener('change', function () { PR.c[it.n] = cb.checked; drawProg(); });
+      list.appendChild(h('li', {}, h('label', {}, cb,
+        h('span', { class: 'nm', text: it.n + (it.star ? ' ★' : '') }),
+        h('span', { class: 'qt' }, adaQ ? fmt(it.q) + ' ' + it.u : '–', it.t ? h('small', { text: it.t }) : null))));
+    });
+    drawProg();
+    host.appendChild(h('div', { class: 'f' }, h('span', { class: 'lb' }, 'Bahan baku — centang setiap selesai dimasukkan', prog), list,
+      h('small', { class: 'hint', text: adaQ ? '★ = bahan patokan.' : 'Isi jumlah di atas dulu, takaran tiap bahan muncul otomatis.' })));
+  }
+  function checkedNow() { return PR.items.filter(function (it) { return PR.c[it.n]; }).map(function (it) { return it.n; }); }
+
+  function planChanged() {
+    fillSelect($('pl-pat'), S.boot.st.resep[codeOf($('pl-produk').value)] || [], 'Ayam (bawaan)', true);
+    var j = $('pl-jenis').value;
+    $('pl-qty-lb').textContent = /^BARU/i.test(j) ? 'Berat bahan patokan (gram)' : /^(BUNG|LANJ)/i.test(j) ? 'Isian yang diambil (gram)' : 'Jumlah dibuat';
+  }
+
+  function renderDyn() {
+    var d = S.boot.dyn;
+    var s = $('saldo'); s.textContent = d.saldo || '–'; s.className = /-\s*\d/.test(d.saldo || '') ? 'neg' : '';
+    badge($('n-orders'), d.orders.length); badge($('n-plans'), d.plans.length);
+    renderOrders(d.orders); renderPlans(d.plans);
+
+    var rk = $('r-kas'); clear(rk);
+    d.recent.kas.forEach(function (r) {
+      var isIn = !!r.masuk;
+      rk.appendChild(h('li', {},
+        h('div', { class: 't' }, h('b', { text: r.ket || '(tanpa keterangan)' }),
+          h('span', { text: r.tgl + (r.qty ? ' · ' + r.qty + ' ' + r.satuan : '') + (r.cek ? ' · ' + r.cek : '') })),
+        h('div', { class: 'r' }, h('b', { text: (isIn ? '+ ' : '') + (r.masuk || r.keluar) }),
+          isIn ? null : h('button', { class: 'again', type: 'button', text: 'Isi seperti ini', onclick: function () { againKas(r); } }))));
+    });
+    if (!d.recent.kas.length) rk.appendChild(h('li', {}, h('span', { text: 'Belum ada catatan.' })));
+
+    var rx = $('r-keluar'); clear(rx);
+    d.recent.keluar.forEach(function (r) {
+      rx.appendChild(h('li', {}, h('div', { class: 't' }, h('b', { text: r.sku }),
+        h('span', { text: r.tgl + ' · ' + r.alasan })), h('div', { class: 'r' }, h('b', { text: r.qty + ' ' + r.satuan }))));
+    });
+    if (!d.recent.keluar.length) rx.appendChild(h('li', {}, h('span', { text: 'Belum ada barang keluar tercatat.' })));
+
+    var rm = $('r-menu'); clear(rm);
+    d.recent.menu.forEach(function (r) {
+      rm.appendChild(h('li', {}, h('div', { class: 't' }, h('b', { text: r.menu }),
+        h('span', { text: r.tgl + ' · ' + r.qty + (r.patokan ? ' ' + r.patokan : '') })),
+        h('div', { class: 'r' }, h('button', { class: 'again', type: 'button', text: 'Isi seperti ini', onclick: function () {
+          var kode = ''; Object.keys(S.harian || {}).forEach(function (c) { if (S.harian[c] === r.menu) kode = c; });
+            var opt = Array.prototype.filter.call($('p-produk').options, function (o) { return o.value && codeOf(o.value) === (kode || codeOf(r.menu)); })[0];
+            if (opt) { $('p-produk').value = opt.value; prodChanged(); }
+            if (r.patokan) $('p-pat').value = r.patokan;
+            patChanged();
+            $('p-qty').value = r.qty; $('p-qty').dispatchEvent(new Event('input')); $('p-qty').focus();
+        } }))));
+    });
+    renderOpname();
+    renderBrief();   // rencana produksi ikut tampil di brief
+  }
+  function badge(el, n) { el.hidden = !n; el.textContent = n; }
+
+  function againKas(r) {
+    $('k-ket').value = r.ket; $('k-rp').value = fmtRp(digits(r.keluar)); $('k-qty').value = r.qty || '';
+    F.kSku.set(S.boot.st.sku.indexOf(r.sku) >= 0 ? r.sku : '');
+    $('k-sat').value = r.satuan || '';
+    $('k-ket').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    toast('Sudah diisi — cek harga & foto nota');
+  }
+  function fmtRp(d) { return d ? Number(d).toLocaleString('id-ID') : ''; }
+
+  /* ---------- 2 · barang sampai ---------- */
+  var openOrder = null;
+  function eqText(o, q) { return o.isi ? ' = ' + fmt(q * o.isi.n) + ' ' + o.isi.u : ''; }
+  /** Nama barang tanpa "(5 bungkus = 200 satuan)" di belakangnya — persamaannya sudah ditampilkan di baris "Dipesan". */
+  function namaOf(o) { return String(o.nama || '').replace(/\s*\([\d.,]+ [^()=]+ = [\d.,]+ [^()=]+\)\s*$/, '') || o.sku; }
+  function renderOrders(orders) {
+    var host = $('orders'); clear(host);
+    if (!orders.length) { host.appendChild(h('div', { class: 'empty', text: 'Tidak ada barang yang sedang ditunggu.' })); return; }
+    orders.forEach(function (o) {
+      var late = /TERLAMBAT/i.test(o.status);
+      var card = h('div', { class: 'item' },
+        h('div', { class: 'item-top' },
+          h('div', {}, h('b', { text: namaOf(o) }),
+            h('div', { class: 'meta', text: 'Dipesan ' + o.qty + ' ' + o.satuan + eqText(o, o.qtyNum) + (o.eta ? ' · perkiraan tiba ' + o.eta : '') }),
+            namaOf(o) !== o.sku ? h('div', { class: 'meta', text: o.sku }) : null,
+            o.catatan ? h('div', { class: 'meta', text: o.catatan }) : null),
+          h('span', { class: 'badge' + (late ? ' late' : ''), text: late ? 'Terlambat' : 'Ditunggu' })));
+      var slot = h('div', {});
+      card.appendChild(slot);
+      if (openOrder === o.key) orderForm(slot, o);
+      else slot.appendChild(h('div', { class: 'act' }, h('button', { class: 'btn small', type: 'button', text: 'Cek barang',
+        onclick: function () { openOrder = o.key; renderOrders(S.boot.dyn.orders); } })));
+      host.appendChild(card);
+    });
+  }
+  function mark(group, v) {
+    Array.prototype.forEach.call(group.children, function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-v') === v ? 'true' : 'false'); });
+  }
+  /** Staff mencocokkan jumlah, lalu memilih satu hasil: OK · Masuk stock · Kembalikan · Terlambat. */
+  function orderForm(slot, o) {
+    var pick = { hasil: '', masalah: '' };
+    var tgl = h('input', { class: 'in', type: 'date', max: S.boot.today }); tgl.value = S.boot.today;
+    var qty = h('input', { class: 'in', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+    var echo = h('small', { class: 'hint', hidden: true });
+    var cat = h('input', { class: 'in', type: 'text', maxlength: '300', autocomplete: 'off' });
+    var catLb = h('em', { text: 'kalau ada' }), fotoLb = h('em', { text: 'kalau ada' });
+    var fotoHost = h('div', {}), box = h('div', {});
+    var opts = h('div', { class: 'opts' });
+    [['ok', 'OK', 'Jumlah dan kondisi sesuai. Semua masuk stok.'],
+     ['sebagian', 'Masuk stock', 'Ada yang kurang / rusak. Yang bagus tetap masuk stok.'],
+     ['kembali', 'Kembalikan ke Shopee / Supplier', 'Barang dikembalikan. Tidak masuk stok.'],
+     ['telat', 'Terlambat', 'Barang belum datang.']].forEach(function (x) {
+      opts.appendChild(h('button', { type: 'button', 'aria-pressed': 'false', 'data-v': x[0], onclick: function () { choose(x[0]); } },
+        x[1], h('small', { text: x[2] })));
+    });
+    var seg = h('div', { class: 'seg' });
+    ['Kurang', 'Rusak', 'Salah barang'].forEach(function (m) {
+      seg.appendChild(h('button', { type: 'button', 'aria-pressed': 'false', 'data-v': m, text: m,
+        onclick: function () { pick.masalah = m; mark(seg, m); } }));
+    });
+    var fTgl = h('label', { class: 'f', hidden: true }, h('span', { class: 'lb', text: 'Tanggal sampai' }), tgl);
+    var fQty = h('label', { class: 'f', hidden: true }, h('span', { class: 'lb' }, 'Jumlah bagus yang masuk stok',
+      h('em', { text: 'dipesan ' + o.qty + ' ' + o.satuan })), qty, echo);
+    var fMas = h('div', { class: 'f', hidden: true }, h('span', { class: 'lb', text: 'Masalahnya' }), seg);
+    var fFoto = h('div', { class: 'f' }, h('span', { class: 'lb' }, 'Foto barang', fotoLb), fotoHost);
+    var fCat = h('label', { class: 'f' }, h('span', { class: 'lb' }, 'Komentar', catLb), cat);
+    var btn = h('button', { class: 'btn', type: 'submit', text: 'Simpan' });
+    function draw() {
+      var q = parseNum(qty.value);
+      if (pick.hasil !== 'sebagian' || q === '' || isNaN(q)) { echo.hidden = true; return; }
+      var d = o.qtyNum - q;
+      echo.hidden = false; echo.className = 'hint auto';
+      echo.textContent = fmt(q) + ' ' + o.satuan + eqText(o, q) +
+        (o.qtyNum ? (d > 0 ? ' · kurang ' + fmt(d) : d < 0 ? ' · lebih ' + fmt(-d) : ' · sama dengan pesanan') : '');
+    }
+    function choose(v) {
+      var prob = v === 'sebagian' || v === 'kembali';
+      pick.hasil = v; mark(opts, v);
+      fTgl.hidden = fFoto.hidden = v === 'telat';
+      fQty.hidden = v !== 'sebagian'; fMas.hidden = !prob; fCat.hidden = false; btn.hidden = false;
+      seg.children[0].hidden = v === 'kembali';      // "Kurang" tidak berlaku untuk barang yang dikembalikan
+      if (v === 'kembali' && pick.masalah === 'Kurang') { pick.masalah = ''; mark(seg, ''); }
+      fotoLb.textContent = prob ? 'wajib' : 'kalau ada';
+      catLb.textContent = prob ? 'wajib — apa yang kurang / rusak / salah' : 'kalau ada';
+      btn.textContent = v === 'telat' ? 'Simpan: belum datang' : 'Simpan barang sampai';
+      draw();
+    }
+    qty.addEventListener('input', draw);
+    // foto + komentar langsung terlihat begitu "Cek barang" dibuka, baru pilih hasilnya
+    var form = h('form', { novalidate: true },
+      fFoto, fCat,
+      h('div', { class: 'f' }, h('span', { class: 'lb' }, 'Hasil pengecekan',
+        h('em', { text: 'dipesan ' + o.qty + ' ' + o.satuan + eqText(o, o.qtyNum) })), opts),
+      fTgl, fQty, fMas, box, btn,
+      h('button', { class: 'link', type: 'button', text: 'Batal', onclick: function () { openOrder = null; renderOrders(S.boot.dyn.orders); } }));
+    dateEcho(tgl);
+    var foto = photoField(fotoHost, 'Foto barang');
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var v = pick.hasil, prob = v === 'sebagian' || v === 'kembali';
+      if (!v) return msg(box, 'err', 'Pilih hasil pengecekan dulu.');
+      var data = { row: o.row, key: o.key, hasil: v, masalah: pick.masalah, tanggal: tgl.value, catatan: cat.value, foto: foto.get() };
+      if (v === 'sebagian') {
+        var q = parseNum(qty.value);
+        if (q === '' || isNaN(q)) return msg(box, 'err', 'Isi jumlah yang bagus dan masuk stok.');
+        if (!pick.masalah) return msg(box, 'err', 'Pilih masalahnya: kurang, rusak, atau salah barang.');
+        if (pick.masalah === 'Kurang' && o.qtyNum && q >= o.qtyNum) return msg(box, 'err', 'Jumlahnya tidak kurang dari pesanan. Kalau semua sesuai pilih OK.');
+        data.qty = q;
+      }
+      if (v === 'kembali' && !pick.masalah) return msg(box, 'err', 'Pilih alasannya: rusak atau salah barang.');
+      if (prob && !cat.value.trim()) return msg(box, 'err', 'Tulis komentar: apa yang kurang / rusak / salah.');
+      if (prob && !foto.get()) return msg(box, 'err', 'Foto barang wajib kalau ada yang kurang, rusak, atau dikembalikan.');
+      submit(form, box, 'terima', data, function (res) {
+        openOrder = null;
+        toast('Tersimpan ✓ ' + (res.cek || ''));
+      });
+    });
+    slot.appendChild(form);
+  }
+
+  // Sinkronisasi antar HP (polling); hindari mereset input yang sedang diketik.
+  var planSyncBusy = false;
+  function syncPlans() {
+    if (!S.token || !S.boot || !S.boot.dyn || planSyncBusy || document.hidden) return;
+    var active = document.activeElement;
+    if (active && active.closest && active.closest('#plans') && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)) return;
+    planSyncBusy = true;
+    call('plansSync').then(function (r) {
+      if (!r || !Array.isArray(r.plans) || !S.boot || !S.boot.dyn) return;
+      var before = JSON.stringify(S.boot.dyn.plans || []);
+      var after = JSON.stringify(r.plans);
+      if (before !== after) {
+        S.boot.dyn.plans = r.plans;
+        badge($('n-plans'), r.plans.length);
+        renderPlans(r.plans);
+        renderBrief();
+      }
+    }).catch(function () {}).then(function () { planSyncBusy = false; });
+  }
+  setInterval(syncPlans, 45000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) syncPlans(); });
+
+  /* ---------- 4a · rencana produksi ---------- */
+  var ckLocal = {}, planDraft = {};
+  /** Centang bahan: yang tersimpan di server (semua HP) + yang baru disentuh di HP ini. */
+  function checkedOf(p) {
+    var mine = ckLocal[p.key] || {}, c = (p.checked || []).filter(function (n) { return mine[n] !== false; });
+    Object.keys(mine).forEach(function (n) { if (mine[n] === true && c.indexOf(n) < 0) c.push(n); });
+    return c;
+  }
+  function renderPlans(plans) {
+    var host = $('plans'); clear(host);
+    if (!plans.length) { host.appendChild(h('div', { class: 'empty', text: 'Tidak ada produksi yang menunggu diisi.' })); return; }
+    plans.forEach(function (p) {
+      var jenis = p.jenis.split(' ')[0] || '', items = p.resep || [], c = checkedOf(p);
+      var n = items.filter(function (it) { return c.indexOf(it.n) >= 0; }).length;
+      var target = [p.targetBerat ? 'target ' + p.targetBerat + ' g' : '', p.targetHasil].filter(Boolean).join(' · ');
+      var card = h('div', { class: 'item', id: 'plan-' + p.row },
+        h('div', { class: 'item-top' },
+          h('div', {}, h('b', { text: p.produk.replace(/^\S+ — /, '') }),
+            h('div', { class: 'meta', text: p.tgl + ' · ' + (/^(BUNG|LANJ)/i.test(jenis) ? 'isian diambil' : p.patokan || 'bahan patokan') + ' ' + p.qty + (/^TAMB/i.test(jenis) ? '' : ' g') }),
+            target ? h('div', { class: 'meta' }, h('span', { class: 'badge auto', text: target })) : null),
+          h('span', { class: 'badge', text: jenis })),
+        p.ket ? h('div', { class: 'note-owner', text: 'Sicillia: ' + p.ket }) : null);
+      var slot = h('div', {});
+      card.appendChild(slot);
+      planForm(slot, p, jenis);   // resep + kotak centang langsung terlihat di bawah rencana
+      host.appendChild(card);
+    });
+  }
+  function planForm(slot, p, jenis) {
+    var baru = /^BARU/i.test(jenis), bung = /^(BUNG|LANJ)/i.test(jenis), items = p.resep || [];
+    var prog = h('em', { class: 'nw' }), list = h('ul', { class: 'ing' }), boxes = [];
+    function drawProg() {
+      var c = checkedOf(p);
+      boxes.forEach(function (b) { b[1].checked = c.indexOf(b[0]) >= 0; });
+      prog.textContent = items.filter(function (it) { return c.indexOf(it.n) >= 0; }).length + ' dari ' + items.length;
+    }
+    items.forEach(function (it) {
+      var cb = h('input', { type: 'checkbox' });
+      boxes.push([it.n, cb]);
+      cb.addEventListener('change', function () {
+        (ckLocal[p.key] = ckLocal[p.key] || {})[it.n] = cb.checked;
+        drawProg();
+        call('cek', { row: p.row, key: p.key, name: it.n, on: cb.checked })
+          .catch(function () { toast('Centang belum tersimpan — cek internet'); });
+      });
+      list.appendChild(h('li', {}, h('label', {}, cb,
+        h('span', { class: 'nm', text: it.n + (it.star ? ' ★' : '') }),
+        h('span', { class: 'qt' }, fmt(it.q) + ' ' + it.u, it.t ? h('small', { text: it.t }) : null))));
+    });
+    drawProg();
+    // Staff mengubah bahan patokan langsung dari rencana; data disimpan ke buku bersama.
+    var patItem = items.filter(function (it) { return it.star; })[0];
+    var editPat = null;
+    if (patItem && !bung) {
+      var inpPat = h('input', { class: 'in', type: 'number', min: '0.001', max: '1000000', step: 'any', inputmode: 'decimal', value: String(patItem.q) });
+      var infoPat = h('small', { class: 'hint', text: 'Ubah berat aktual, lalu tekan Simpan & hitung ulang resep. Semua staff akan melihat hasilnya.' });
+      var savePat = h('button', { class: 'btn', type: 'button', text: 'Simpan berat aktual & hitung resep' });
+      savePat.addEventListener('click', function () {
+        var q = Number(inpPat.value);
+        if (!isFinite(q) || q <= 0 || q > 1000000) { toast('Berat aktual harus lebih dari 0 gram.'); return; }
+        if (Math.abs(q - Number(patItem.q)) < 0.000001) { toast('Berat belum berubah.'); return; }
+        savePat.disabled = true; savePat.textContent = 'Menyimpan…';
+        call('ubahPatokan', { data: { row: p.row, key: p.key, qty: q }, rid: nonce() }).then(function (out) {
+          S.boot.dyn = out.dyn;
+          delete ckLocal[p.key]; delete planDraft[p.key];
+          renderDyn(); loadBrief(false);
+          toast('Berat aktual tersimpan — resep diperbarui di semua HP ✓');
+        }).catch(function (err) {
+          savePat.disabled = false; savePat.textContent = 'Simpan berat aktual & hitung resep';
+          toast(err.message || 'Gagal menyimpan berat aktual.');
+        });
+      });
+      editPat = h('div', { class: 'f' },
+        h('span', { class: 'lb', text: 'Berat aktual bahan patokan — ' + patItem.n + ' (' + patItem.u + ')' }),
+        inpPat, infoPat, savePat);
+    }
+    // ambil centang terbaru dari server — mungkin sudah dicentang dari HP lain
+    if (items.length) call('cek', { row: p.row, key: p.key }).then(function (r) { p.checked = r.checked || []; drawProg(); }).catch(function () {});
+    var isian = /isian/i.test(p.produk);
+    // yang sudah diketik disimpan sementara, supaya tidak hilang saat daftar dimuat ulang
+    var draft = planDraft[p.key] = planDraft[p.key] || {};
+    function keep(input, k, awal) {
+      input.value = draft[k] != null ? draft[k] : (awal || '');
+      input.addEventListener('input', function () { draft[k] = input.value; });
+    }
+    var berat = h('input', { class: 'in', type: 'text', inputmode: 'decimal', autocomplete: 'off' });
+    var sisa = h('input', { class: 'in', type: 'text', inputmode: 'decimal', autocomplete: 'off', placeholder: '0' });
+    var aktual = h('input', { class: 'in', type: 'text', maxlength: '120', autocomplete: 'off',
+      placeholder: isian ? 'mis. 77 lumpia + 105 pangsit' : 'mis. 41' });
+    var ket = h('input', { class: 'in', type: 'text', maxlength: '300', autocomplete: 'off' });
+    keep(berat, 'berat', p.beratJadi); keep(sisa, 'sisa', p.sisa); keep(aktual, 'aktual', p.aktual);
+    keep(ket, 'ket', String(p.ketStaff || '').replace(/\s*—\s*[^—]*\(HP\)\s*$/, '').replace(/^—.*$/, ''));
+    var done = h('input', { type: 'checkbox' }); done.checked = draft.done !== false;
+    done.addEventListener('change', function () { draft.done = done.checked; });
+    var e1 = h('small', { class: 'hint', hidden: true }), e2 = h('small', { class: 'hint', hidden: true });
+    echoNum(sisa, e2);
+    function drawBerat() {
+      var b = parseNum(berat.value), d = b - p.targetNum;
+      if (b === '' || isNaN(b) || !p.targetNum) { e1.hidden = true; return; }
+      e1.hidden = false; e1.className = 'hint auto';
+      e1.textContent = 'Terbaca ' + fmt(b) + ' g · selisih dari target ' + (d > 0 ? '+' : '') + fmt(d) + ' g';
+    }
+    berat.addEventListener('input', drawBerat);
+    drawBerat();
+    var box = h('div', {});
+    var form = h('form', { novalidate: true },
+      editPat,
+      items.length ? h('div', { class: 'f' }, h('span', { class: 'lb' }, 'Bahan baku — centang setiap selesai dimasukkan', prog), list,
+        h('small', { class: 'hint', text: '★ = bahan patokan. Yang sudah dicentang tercoret.' })) : null,
+      p.targetNum ? h('div', { class: 'target' }, 'Berat target (otomatis): ', h('b', { text: fmt(p.targetNum) + ' g' }),
+        p.targetHasil ? ' · ' + p.targetHasil : '') : null,
+      baru ? h('label', { class: 'f' }, h('span', { class: 'lb' }, 'Berat jadi (gram)', h('em', { text: 'wajib' })), berat, e1) : null,
+      bung ? h('label', { class: 'f' }, h('span', { class: 'lb' }, 'Sisa isian dikembalikan (gram)', h('em', { text: 'kosong = habis' })), sisa, e2) : null,
+      h('label', { class: 'f' }, h('span', { class: 'lb' }, isian ? 'Jadi berapa lumpia & pangsit' : 'Jumlah jadi',
+        h('em', { text: isian ? 'tulis dua-duanya' : 'kalau beda dari hitungan' })), aktual,
+        h('small', { class: 'hint', text: 'Angka, atau tulis mis. "40 lumpia + 1 pangsit". Yang ditulis di sini yang masuk stok.' })),
+      h('label', { class: 'f' }, h('span', { class: 'lb' }, 'Keterangan', h('em', { text: 'kalau ada' })), ket),
+      h('label', { class: 'check' }, done, h('span', { text: 'Produksi ini sudah selesai' })),
+      box,
+      h('button', { class: 'btn', type: 'submit', text: 'Simpan hasil' }));
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var b = baru ? parseNum(berat.value) : '', s = bung ? parseNum(sisa.value) : '', c = checkedOf(p);
+      if (isNaN(b) || isNaN(s)) return msg(box, 'err', 'Berat / sisa harus angka.');
+      if (done.checked) {
+        var belum = items.filter(function (it) { return c.indexOf(it.n) < 0; }).length;
+        if (belum) return msg(box, 'err', 'Centang dulu semua bahan baku yang sudah dimasukkan (' + belum + ' belum).');
+        if (baru && !(b > 0)) return msg(box, 'err', 'Berat jadi wajib diisi (gram).');
+      }
+      submit(form, box, 'selesai', { row: p.row, key: p.key, beratJadi: b, sisa: s, aktual: aktual.value, ket: ket.value,
+        selesai: done.checked, checked: c }, function (res) {
+        delete ckLocal[p.key]; delete planDraft[p.key];
+        toast('Tersimpan ✓ ' + (res.cek ? 'Hasil: ' + res.cek : ''));
+      });
+    });
+    slot.appendChild(form);
+  }
+
+  /* ---------- 5 · hitung stok ---------- */
+  var OP = { mode: 'A', vals: {}, init: false };   // vals[sku] = { q, u } — isian tetap ada saat daftar digambar ulang
+  function grupOf(code) { return (S.boot.st.grup || {})[code] || 'B'; }
+  function shortName(sku) { return String(sku).replace(/^\S+\s+/, ''); }
+  function lokName(s) {
+    s = String(s || '').trim().toLowerCase();
+    return s ? s.replace(/(^|\s)\S/g, function (c) { return c.toUpperCase(); }) : 'Lainnya';
+  }
+  /** Isi per kemasan menurut daftar bahan (mis. 1 order = 50 satuan); null kalau bukan barang kemasan. */
+  function packOf(sku) {
+    var k = (S.boot.st.konv || {})[String(sku).split(' ')[0]];
+    return k && k[0] > 0 && k[2] / k[0] > 1 && WEIGHT.indexOf(k[1]) < 0 ? { n: k[2] / k[0], awal: k[1], kecil: k[3] } : null;
+  }
+  function opnameItems() {
+    var st = S.boot.st, out = [], rank = { A: 0, B: 1, C: 2 };
+    st.sku.forEach(function (s) {
+      var code = s.split(' ')[0], g = grupOf(code);
+      if (s.charAt(0) === 'X' || !st.units[code] || g === 'X') return;
+      if (OP.mode === 'A' && g !== 'A') return;
+      out.push({ sku: s, code: code, g: g, lok: lokName((st.lok || {})[code]) });
+    });
+    out.sort(function (a, b) { return a.lok === b.lok ? rank[a.g] - rank[b.g] : (a.lok < b.lok ? -1 : 1); });
+    return out;
+  }
+  function renderOpname() {
+    var st = S.boot.st, done = (S.boot.dyn.opname || {}).done || {};
+    var isToday = $('s-tgl').value === S.boot.today, list = $('s-list'), items = opnameItems(), lastLok = null, left = 0;
+    clear(list);
+    Array.prototype.forEach.call($('s-mode').children, function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-mode') === OP.mode ? 'true' : 'false');
+    });
+    $('s-info').textContent = OP.mode === 'A' ? 'Isi yang dihitung saja. Yang dikosongkan tidak disimpan.'
+      : 'Cairan & bubuk: timbang. Barang pack: hitung pack yang masih utuh saja. Yang dikosongkan tidak disimpan.';
+    items.forEach(function (it) {
+      var allowed = unitRule('keluar', it.sku).allowed || [], u = st.units[it.code], pack = packOf(it.sku);
+      var keep = OP.vals[it.sku] || {}, d = isToday ? done[it.code] : null;
+      // satuan bawaan: pack → satuan beli; olahan yang dibungkus (topping) → bungkus; lainnya → satuan terkecil (pcs / gram)
+      var def = it.g === 'C' && pack ? u[0] : (it.code.slice(0, 2) === 'BO' && WEIGHT.indexOf(u[1]) >= 0 && u[0] !== u[1] ? u[0] : u[1]);
+      if (allowed.indexOf(def) < 0) def = allowed[0] || '';
+      var inp = h('input', { class: 'in', type: 'text', inputmode: 'decimal', autocomplete: 'off',
+        placeholder: d ? String(d.qty) : '0', 'aria-label': 'Jumlah ' + shortName(it.sku) });
+      inp.value = keep.q || '';
+      var sel = h('select', { class: 'in', 'aria-label': 'Satuan ' + shortName(it.sku) });
+      fillSelect(sel, allowed, null, false);
+      sel.value = keep.u && allowed.indexOf(keep.u) >= 0 ? keep.u : def;
+      var remember = function () { OP.vals[it.sku] = { q: inp.value, u: sel.value }; };
+      inp.addEventListener('input', remember); sel.addEventListener('change', remember);
+      var sub = d ? '✓ Sudah dihitung: ' + d.qty + ' ' + d.satuan + (d.oleh ? ' · ' + d.oleh : '')
+        : pack ? (it.g === 'C' ? 'Pack utuh saja · ' : '') + '1 ' + pack.awal + ' = ' + fmt(pack.n) + ' ' + pack.kecil : '';
+      if (it.g === 'A' && isToday && !d) left++;
+      if (it.lok !== lastLok) { list.appendChild(h('div', { class: 'lokasi', text: it.lok })); lastLok = it.lok; }
+      var row = h('div', { class: 'cnt' }, h('b', { text: shortName(it.sku) }),
+        sub ? h('span', { class: d ? 'sub done' : 'sub', text: sub }) : null, h('div', { class: 'ctl' }, inp, sel));
+      row._it = it; row._inp = inp; row._sel = sel;
+      list.appendChild(row);
+    });
+    if (!items.length) list.appendChild(h('div', { class: 'empty', text: 'Belum ada barang di kelompok ini. Kabari Sicillia.' }));
+    badge($('n-opname'), left);
+    renderPacks();
+  }
+  /** Tombol "Buka 1 pack" — hanya barang kelompok C yang tidak dipotong lewat resep. */
+  function renderPacks() {
+    var st = S.boot.st, host = $('s-packs'), n = 0;
+    clear(host);
+    st.sku.forEach(function (s) {
+      var code = s.split(' ')[0], pack = packOf(s);
+      if (grupOf(code) !== 'C' || !pack || (st.pakai || []).indexOf(code) >= 0) return;
+      n++;
+      var btn = h('button', { class: 'btn small ghost', type: 'button', text: 'Buka 1 pack' });
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        btn.disabled = true; btn.textContent = 'Menyimpan…';
+        call('buka', { data: { sku: s }, rid: nonce() }).then(function (out) {
+          S.boot.dyn = out.dyn; renderDyn();
+          msg($('s-pack-msg'), 'ok', '✓ 1 ' + pack.awal + ' ' + shortName(s) + ' dicatat dibuka', fmt(pack.n) + ' ' + pack.kecil + ' keluar dari stok.');
+          toast('Tersimpan ✓');
+        }).catch(function (e) {
+          btn.disabled = false; btn.textContent = 'Buka 1 pack';
+          if (e.code === 'AUTH') return toLogin(e.message);
+          msg($('s-pack-msg'), 'err', e.message);
+        });
+      });
+      host.appendChild(h('div', { class: 'item' }, h('div', { class: 'item-top' },
+        h('div', {}, h('b', { text: shortName(s) }), h('div', { class: 'meta', text: '1 ' + pack.awal + ' = ' + fmt(pack.n) + ' ' + pack.kecil })), btn)));
+    });
+    $('s-pack-wrap').hidden = !n;
+  }
+
+  /* ---------- ☀ · brief pagi ---------- */
+  var BR = { data: null, err: '', busy: false };
+  function loadBrief(fresh) {
+    if (BR.busy) return;
+    BR.busy = true; renderBrief();
+    call('brief', { fresh: !!fresh }).then(function (d) { BR.busy = false; BR.data = d; BR.err = ''; renderBrief(); })
+      .catch(function (e) { BR.busy = false; if (e.code === 'AUTH') return; BR.err = e.message; renderBrief(); });
+  }
+  function tglKata(ymd, panjang) {
+    var p = String(ymd || '').split('-');
+    if (p.length !== 3) return String(ymd || '');
+    return new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('id-ID', { weekday: panjang ? 'long' : 'short', day: 'numeric', month: 'short' });
+  }
+  function lalu(n) { return n === 0 ? 'hari ini' : n === 1 ? 'kemarin' : n + ' hari lalu'; }
+  function goTo(el) {
+    if (!el) return;
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  }
+  function planFor(kode) {
+    var hit = null;
+    (S.boot.dyn.plans || []).forEach(function (p) { if (!hit && codeOf(p.produk) === kode) hit = p; });
+    return hit;
+  }
+  /** Loncat ke bagian Produksi, langsung ke tempat mencatat barang itu. */
+  function goProduksi(it) {
+    if (it.cara !== 'harian') {
+      var p = planFor(it.kode) || (it.isian && !(it.isian.stok > 0) ? planFor('BO005') : null);
+      if (p && $('plan-' + p.row)) return goTo($('plan-' + p.row));
+    }
+    var opt = Array.prototype.filter.call($('p-produk').options, function (o) { return o.value && (o.value === it.label || codeOf(o.value) === it.kode); })[0];
+    if (opt) { $('p-produk').value = opt.value; prodChanged(); }
+    goTo($('d-prod'));
+  }
+  /** Khusus Sicillia: loncat ke form Pembelian baru dengan barangnya sudah terpilih. */
+  function goOrder(kode) {
+    var sku = '';
+    S.boot.st.sku.forEach(function (s) { if (!sku && s.split(' ')[0] === kode) sku = s; });
+    if (sku) F.oSku.set(sku);
+    goTo($('sec-order'));
+  }
+  function briefBtn(text, fn, ghost) {
+    return h('button', { class: 'btn small' + (ghost ? ' ghost' : ''), type: 'button', text: text, onclick: fn });
+  }
+  function renderBrief() {
+    var host = $('b-body'), d = BR.data, n = 0;
+    if (!S.boot) return;
+    $('b-sub').textContent = tglKata(S.boot.today, true) + ' · cek ini dulu sebelum buka.';
+    clear(host);
+    if (!d) {
+      host.appendChild(BR.err
+        ? h('div', {}, h('div', { class: 'msg err', text: 'Brief belum bisa dimuat. ' + BR.err }),
+            briefBtn('Coba lagi', function () { loadBrief(true); }, true))
+        : h('div', { class: 'empty', text: 'Memuat brief…' }));
+      badge($('n-brief'), 0);
+      return;
+    }
+    (d.catatan || []).forEach(function (c) { host.appendChild(h('div', { class: 'warnline', text: c })); });
+
+    /* 1 — stok yang kurang */
+    var k = d.kurang;
+    host.appendChild(h('h3', { text: 'Stok yang kurang' }));
+    if (!k) {
+      host.appendChild(h('div', { class: 'empty', text: 'Data hitung stok belum terbaca.' }));
+    } else if (!k.ada) {
+      host.appendChild(h('div', { class: 'empty', text: 'Belum ada hitungan stok. Hitung barang harian saat tutup, besok pagi hasilnya muncul di sini.' }));
+    } else {
+      host.appendChild(h('p', { class: 'hint', style: 'margin:-4px 0 10px',
+        text: 'Dari hitung stok ' + tglKata(k.tgl) + ' (' + lalu(k.hariLalu) + '), dibanding catatan sistem.' }));
+      if (k.lama) host.appendChild(h('div', { class: 'warnline', text: 'Hari buka terakhir belum ada hitungan. Hitung barang harian setiap tutup supaya brief ini tepat.' }));
+      if (!k.items.length) {
+        host.appendChild(h('div', { class: 'okline', text: '✓ Tidak ada barang yang kurang dari catatan.' }));
+      } else {
+        var ul = h('ul', { class: 'recent kur' }), adaBesar = false;
+        k.items.forEach(function (it) {
+          var pack = it.pack ? '≈ ' + fmt(it.pack.n) + ' ' + it.pack.sat : '';
+          if (it.besar) adaBesar = true;
+          ul.appendChild(h('li', {},
+            h('div', { class: 't' }, h('b', { text: it.nama }),
+              h('span', { text: 'Catatan ' + fmt(it.sistem) + ' · dihitung ' + fmt(it.hitung) })),
+            h('div', { class: 'r' }, h('b', { text: '−' + fmt(it.kurang) + ' ' + it.sat }),
+              it.besar ? h('span', { class: 'badge late', text: 'hitung ulang' }) : (pack ? h('span', { class: 'pk', text: pack }) : null))));
+        });
+        host.appendChild(ul);
+        if (adaBesar) host.appendChild(h('p', { class: 'hint', style: 'margin:8px 0 0',
+          text: '"Hitung ulang" = selisihnya besar, kemungkinan salah hitung atau stok awal salah. Hitung lagi hari ini.' }));
+        if (k.lain) host.appendChild(h('p', { class: 'hint', style: 'margin:8px 0 0',
+          text: '+ ' + k.lain + ' barang lain juga kurang' + (S.boot.owner ? ' — lihat tab "Selisih Opname" di buku Inventory Harian.' : '.') }));
+        host.appendChild(h('p', { class: 'hint', style: 'margin:8px 0 0', text: 'Cari dulu barangnya. Kalau memang terbuang atau rusak, catat di Barang keluar.' }));
+        host.appendChild(h('div', { class: 'acts' },
+          briefBtn('Hitung ulang', function () { goTo($('sec-opname')); }, true),
+          briefBtn('Catat barang keluar', function () { goTo($('sec-keluar')); }, true)));
+      }
+    }
+
+    /* 2 — yang perlu dibuat */
+    host.appendChild(h('h3', { text: 'Yang perlu dibuat hari ini' }));
+    var buat = (d.buat || []).slice(), ada = {};
+    buat.forEach(function (it) { ada[it.kode] = 1; if (it.isian && !(it.isian.stok > 0)) ada.BO005 = 1; });
+    // rencana produksi dari Sicillia yang belum selesai, dan belum tercantum di atas
+    (S.boot.dyn.plans || []).forEach(function (p) {
+      var kode = codeOf(p.produk);
+      if (ada[kode]) return;
+      ada[kode] = 1;
+      buat.push({ kode: kode, nama: p.produk.replace(/^\S+ — /, ''), cara: 'rencana', label: p.produk, level: 'plan', plan: p });
+    });
+    var sudah = buat.filter(function (it) { return it.level === 'sudah'; });
+    buat = buat.filter(function (it) { return it.level !== 'sudah'; });
+    n = buat.length;
+    if (!buat.length) host.appendChild(h('div', { class: 'okline', text: '✓ Tidak ada yang perlu dibuat pagi ini.' }));
+    buat.forEach(function (it) {
+      var p = it.plan || planFor(it.kode), tag, tagCls = 'badge', lines = [];
+      var ip = !p && it.isian && !(it.isian.stok > 0) ? planFor('BO005') : null;   // rencana masak isian
+      if (it.cara === 'harian') {
+        tag = it.selang > 1 ? 'tiap ' + it.selang + ' hari' : 'tiap hari';
+        lines.push(it.last ? 'Terakhir dibuat ' + tglKata(it.last) + ' (' + lalu(it.hari) + ').' : 'Belum pernah dicatat.');
+      } else if (it.level === 'plan') {
+        tag = 'rencana'; tagCls = 'badge auto';
+        lines.push('Rencana ' + p.tgl + (p.targetHasil ? ' · target ' + p.targetHasil : '') + '.');
+      } else {
+        tag = it.level === 'habis' ? 'habis' : 'hampir habis'; tagCls = 'badge late';
+        lines.push('Stok ' + fmt(it.stok) + ' ' + it.sat + ' · terpakai ±' + fmt(it.avg) + ' per hari' +
+          (it.stok > 0 ? ' · cukup ±' + fmt(it.cukup) + ' hari.' : '.'));
+        if (it.saran > 0) lines.push('Supaya cukup 5 hari, buat ±' + fmt(it.saran) + ' ' + it.sat + ' lagi.');
+        if (it.isian) lines.push(it.isian.stok > 0 ? 'Isian tersedia ' + fmt(it.isian.stok) + ' ' + it.isian.sat + '.'
+                                                   : 'Isian habis — masak isian dulu, baru dibungkus.');
+        if (p) lines.push('Sudah ada rencana dari Sicillia (' + p.tgl + ').');
+        else if (ip) lines.push('Sudah ada rencana masak isian dari Sicillia (' + ip.tgl + ').');
+      }
+      if (it.level === 'plan' && p.ket) lines.push('Sicillia: ' + p.ket);
+      var tombol = it.cara !== 'harian' && (p || ip) ? 'Buka rencana →' : 'Catat di Produksi →';
+      host.appendChild(h('div', { class: 'item' },
+        h('div', { class: 'item-top' },
+          h('div', {}, h('b', { text: it.nama }),
+            lines.map(function (t) { return h('div', { class: 'meta', text: t }); })),
+          h('span', { class: tagCls, text: tag })),
+        h('div', { class: 'acts' }, briefBtn(tombol, function () { goProduksi(it); }))));
+    });
+    sudah.forEach(function (it) {
+      host.appendChild(h('div', { class: 'item done' }, h('b', { text: '✓ ' + it.nama }),
+        h('div', { class: 'meta', text: 'Sudah dicatat hari ini.' })));
+    });
+
+    /* 3 — khusus Sicillia: barang yang perlu distok ulang */
+    if (S.boot.owner && d.order) {
+      host.appendChild(h('h3', { class: 'own-h', text: '★ Perlu distok ulang' }));
+      host.appendChild(h('p', { class: 'hint', style: 'margin:-4px 0 10px',
+        text: 'Hanya tampil untuk Sicillia. Barang berstatus ORDER di tab Stok Harian; olahan dapur tidak termasuk.' }));
+      if (!d.order.length) host.appendChild(h('div', { class: 'okline', text: '✓ Tidak ada barang yang perlu dibeli.' }));
+      else {
+        var ol = h('ul', { class: 'recent kur ord' });
+        d.order.forEach(function (it) {
+          var ket = it.level === 'minus' ? 'Stok minus (' + fmt(it.stok) + ' ' + it.sat + ') — cek catatan'
+            : it.level === 'habis' ? 'Habis'
+            : 'Sisa ' + fmt(it.stok) + ' ' + it.sat + (it.level === 'tipis' ? ' · cukup ±' + fmt(it.cukup) + ' hari' : ' · minimum ' + (it.min || '–'));
+          var pesan = (S.boot.dyn.orders || []).filter(function (o) { return String(o.sku).split(' ')[0] === it.kode; });
+          var beli = it.pack ? fmt(it.pack.n) + ' ' + it.pack.sat : (it.saran > 0 ? fmt(it.saran) + ' ' + it.sat : '');
+          if (!pesan.length) n++;
+          ol.appendChild(h('li', {},
+            h('div', { class: 't' }, h('b', { text: it.nama }), h('span', { text: ket }),
+              pesan.map(function (o) { return h('span', { class: 'dipesan', text: '✓ Sudah dipesan ' + o.qty + ' ' + o.satuan + (o.eta ? ' · tiba ' + o.eta : '') }); })),
+            h('div', { class: 'r' }, beli ? h('b', { text: 'beli ±' + beli }) : null,
+              it.pack && it.saran > 0 ? h('span', { class: 'pk', text: 'butuh ±' + fmt(it.saran) + ' ' + it.sat }) : null,
+              h('button', { class: 'again', type: 'button', text: 'Catat order', onclick: function () { goOrder(it.kode); } }))));
+        });
+        host.appendChild(ol);
+      }
+    }
+    if (d.stokTgl) host.appendChild(h('p', { class: 'asof', text: 'Stok menurut buku Inventory Harian per ' + d.stokTgl + ' (diperbarui tiap jam).' }));
+    badge($('n-brief'), n);
+  }
+
+  /* ---------- isian tetap ---------- */
+  function initForms() {
+    F.kSku = pickField($('k-sku'), 'Barang masuk stok', 'Bukan barang stok', function () { return skuItems(true); },
+      function (v) { applyUnit('kas', v, $('k-sat'), $('k-sku-hint')); });
+    F.xSku = pickField($('x-sku'), 'Barang yang dibuang', 'Pilih barang…', function () { return skuItems(false); },
+      function (v) { applyUnit('keluar', v, $('x-sat'), $('x-sku-hint')); });
+    F.oSku = pickField($('o-sku'), 'Barang yang dibeli', 'Pilih barang…', function () { return skuItems(false); },
+      function (v) { softUnit(v, true); });
+    F.kNota = photoField($('k-nota'), 'Foto nota');
+    F.kBarang = photoField($('k-barang'), 'Foto barang');
+    F.tFoto = photoField($('t-foto'), 'Foto bukti');
+    F.xFoto = photoField($('x-foto'), 'Foto barang');
+    F.kNota.onChange(function (ada) { if (ada) $('k-tanpa').checked = false; });
+
+    echoNum($('k-qty'), $('k-qty-echo')); echoNum($('x-qty'), $('x-qty-echo'));
+    echoNum($('p-qty'), $('p-qty-echo')); $('p-qty').addEventListener('input', drawResep);
+    $('k-rp').addEventListener('input', function () { this.value = fmtRp(digits(this.value).slice(0, 9)); });
+    echoNum($('o-qty'), $('o-qty-echo'));
+    $('o-total').addEventListener('input', function () { this.value = fmtRp(digits(this.value).slice(0, 9)); });
+    $('o-tgl').addEventListener('change', function () { $('o-eta').min = this.value; });
+    $('o-sat').addEventListener('change', function () { isiRefresh(true); });
+    ['o-qty', 'o-isi'].forEach(function (id) { $(id).addEventListener('input', function () { isiRefresh(false); }); });
+    echoNum($('pl-qty'), $('pl-qty-echo'));
+    $('pl-produk').addEventListener('change', planChanged);
+    $('pl-jenis').addEventListener('change', planChanged);
+    $('p-produk').addEventListener('change', prodChanged);
+    $('p-pat').addEventListener('change', patChanged);
+
+    // ★ · pembelian baru & ETA (Sicillia)
+    $('f-order').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('o-msg'), qty = parseNum($('o-qty').value), total = digits($('o-total').value), eta = $('o-eta').value;
+      var isi = parseNum($('o-isi').value);
+      if (!F.oSku.get()) return msg(box, 'err', 'Pilih barang yang dibeli.');
+      if (qty === '' || isNaN(qty) || !(qty > 0)) return msg(box, 'err', 'Isi Qty pesan dengan angka.');
+      if (!$('o-sat').value) return msg(box, 'err', 'Pilih Satuan.');
+      if (isNaN(isi) || (isi !== '' && !(isi > 0))) return msg(box, 'err', 'Isi per satuan harus angka, atau dikosongkan.');
+      if (!eta) return msg(box, 'err', 'Isi estimasi tiba (boleh hari ini).');
+      if (eta < $('o-tgl').value) return msg(box, 'err', 'Estimasi tiba tidak boleh sebelum tanggal order.');
+      submit(this, box, 'order', { tanggal: $('o-tgl').value, noPesanan: $('o-no').value, sku: F.oSku.get(), nama: $('o-nama').value,
+        qty: qty, satuan: $('o-sat').value, isi: isi, isiSatuan: isiRefresh.unit || 'pcs', total: total ? Number(total) : '',
+        bayar: $('o-bayar').value, eta: eta, kategori: $('o-kat').value }, function (res) {
+        ['o-nama', 'o-qty', 'o-total'].forEach(function (id) { $(id).value = ''; });
+        $('o-kat').value = ''; $('o-qty-echo').hidden = true; F.oSku.set('');
+        $('o-isi').value = ''; isiRefresh(false);
+        msg(box, 'ok', '✓ Pembelian tersimpan di baris ' + res.row + (res.cek ? ' — ' + res.cek : ''),
+          'Tanggal, no pesanan, pembayaran dan estimasi tiba tetap terisi untuk barang berikutnya dari pesanan yang sama.');
+        toast('Tersimpan ✓');
+      });
+    });
+
+    // ★ · rencana produksi (Sicillia)
+    $('f-plan').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('pl-msg'), qty = parseNum($('pl-qty').value);
+      if (!$('pl-produk').value) return msg(box, 'err', 'Pilih produk.');
+      if (qty === '' || isNaN(qty) || !(qty > 0)) return msg(box, 'err', 'Isi Qty dengan angka.');
+      submit(this, box, 'produksi', { tanggal: $('pl-tgl').value, jenis: $('pl-jenis').value, produk: $('pl-produk').value,
+        patokan: $('pl-pat').value, qty: qty, ket: $('pl-ket').value }, function (res) {
+        $('pl-qty').value = ''; $('pl-ket').value = ''; $('pl-qty-echo').hidden = true;
+        msg(box, 'ok', '✓ Rencana tersimpan' + (res.cek ? ' — ' + res.cek : ''),
+          'Staff sekarang melihat resep dan centang bahannya di "Produksi dapur".');
+        toast('Tersimpan ✓');
+      });
+    });
+
+    // ★ · top up kas kecil (Sicillia)
+    $('t-rp').addEventListener('input', function () { this.value = fmtRp(digits(this.value).slice(0, 9)); });
+    $('f-topup').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('t-msg'), rp = Number(digits($('t-rp').value) || 0), jenis = $('t-jenis').value;
+      if (!(rp > 0)) return msg(box, 'err', 'Isi jumlah uang yang masuk.');
+      if (rp > S.boot.maxRp) return msg(box, 'err', 'Jumlahnya terlalu besar untuk kas kecil. Cek lagi angkanya.');
+      if (/^lainnya/i.test(jenis) && !$('t-ket').value.trim()) return msg(box, 'err', 'Jenis "Lainnya": tulis keterangannya.');
+      submit(this, box, 'masuk', { tanggal: $('t-tgl').value, rp: rp, jenis: jenis, ket: $('t-ket').value, foto: F.tFoto.get() }, function (res) {
+        $('t-rp').value = ''; $('t-ket').value = ''; F.tFoto.clear();
+        msg(box, 'ok', '✓ Uang masuk Rp ' + fmtRp(rp) + ' tersimpan di baris ' + res.row + (res.saldo ? ' — saldo sekarang ' + res.saldo : ''));
+        toast('Tersimpan ✓');
+      });
+    });
+
+    // 1 · kas kecil
+    $('f-kas').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('k-msg'), rp = Number(digits($('k-rp').value) || 0), qty = parseNum($('k-qty').value), sku = F.kSku.get();
+      if (!$('k-ket').value.trim()) return msg(box, 'err', 'Tulis dulu beli apa / di mana.');
+      if (!(rp > 0)) return msg(box, 'err', 'Isi jumlah uang yang keluar.');
+      if (rp > S.boot.maxRp) return msg(box, 'err', 'Jumlahnya terlalu besar untuk kas kecil. Cek lagi angkanya.');
+      if (isNaN(qty)) return msg(box, 'err', 'Qty harus angka.');
+      if (sku && (qty === '' || !$('k-sat').value)) return msg(box, 'err', 'Barang masuk stok: isi Qty dan pilih Satuan.');
+      if (!F.kNota.get() && !$('k-tanpa').checked) return msg(box, 'err', 'Foto notanya dulu. Kalau nota memang tidak ada, centang "Nota tidak ada".');
+      submit(this, box, 'kas', { tanggal: $('k-tgl').value, ket: $('k-ket').value, rp: rp, qty: qty, satuan: $('k-sat').value,
+        sku: sku, catatan: $('k-cat').value, fotoNota: F.kNota.get(), fotoBarang: F.kBarang.get(),
+        tanpaNota: $('k-tanpa').checked }, function (res) {
+        ['k-ket', 'k-rp', 'k-qty', 'k-cat'].forEach(function (id) { $(id).value = ''; });
+        $('k-tanpa').checked = false; $('k-qty-echo').hidden = true;
+        F.kNota.clear(); F.kBarang.clear(); F.kSku.set('');
+        saved(box, res, 'Belanja');
+      });
+    });
+
+    // 3 · barang keluar
+    $('f-keluar').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('x-msg'), qty = parseNum($('x-qty').value), alasan = $('x-alasan').value;
+      if (!F.xSku.get()) return msg(box, 'err', 'Pilih barang yang dibuang.');
+      if (qty === '' || isNaN(qty) || !(qty > 0)) return msg(box, 'err', 'Isi Qty dengan angka.');
+      if (!$('x-sat').value) return msg(box, 'err', 'Pilih Satuan.');
+      if (!alasan) return msg(box, 'err', 'Pilih alasan.');
+      if (/^lainnya/i.test(alasan) && !$('x-ket').value.trim()) return msg(box, 'err', 'Alasan "Lainnya": tulis apa yang terjadi.');
+      submit(this, box, 'keluar', { tanggal: $('x-tgl').value, sku: F.xSku.get(), qty: qty, satuan: $('x-sat').value,
+        alasan: alasan, ket: $('x-ket').value, foto: F.xFoto.get() }, function (res) {
+        ['x-qty', 'x-ket'].forEach(function (id) { $(id).value = ''; });
+        $('x-alasan').value = ''; $('x-qty-echo').hidden = true; F.xFoto.clear(); F.xSku.set('');
+        saved(box, res, 'Barang keluar');
+      });
+    });
+
+    // 4b · catat produksi (satu form): kuah & teh → tabel buatan harian; lainnya → daftar Rencana produksi
+    $('f-prod').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('p-msg'), label = $('p-produk').value, qty = parseNum($('p-qty').value);
+      if (!label) return msg(box, 'err', 'Pilih yang dibuat.');
+      if (qty === '' || isNaN(qty) || !(qty > 0)) return msg(box, 'err', 'Isi jumlahnya dengan angka.');
+      var lanj = isLanjut(label), pat = lanj ? '' : $('p-pat').value, c = checkedNow();
+      if (!lanj && !pat) return msg(box, 'err', 'Pilih bahan patokan.');
+      var belum = PR.items.length - c.length;
+      if (isHarian(label)) {
+        if (belum > 0) return msg(box, 'err', 'Centang dulu semua bahan baku yang sudah dimasukkan (' + belum + ' belum).');
+        return submit(this, box, 'menu', { tanggal: $('p-tgl').value, menu: S.harian[codeOf(label)], patokan: pat, qty: qty, checked: c }, function (res) {
+          $('p-qty').value = ''; $('p-qty-echo').hidden = true; PR.c = {}; drawResep();
+          msg(box, 'ok', '✓ Tersimpan. Bahan yang terpotong dari stok:', (res.bahan || []).join(' · '));
+          toast('Tersimpan ✓');
+        });
+      }
+      submit(this, box, 'produksi', { tanggal: $('p-tgl').value, jenis: jenisOpt(lanj), produk: label,
+                                      patokan: pat, qty: qty, selesai: false, checked: c }, function (res) {
+        $('p-qty').value = ''; $('p-qty-echo').hidden = true; PR.c = {}; drawResep();
+        msg(box, '', '');
+        toast('Masuk daftar Rencana produksi — isi hasilnya setelah selesai');
+        setTimeout(function () { var card = res && res.row ? $('plan-' + res.row) : null; (card || $('plans')).scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 50);
+      });
+    });
+
+    // 5 · hitung stok
+    Array.prototype.forEach.call($('s-mode').children, function (b) {
+      b.addEventListener('click', function () { OP.mode = b.getAttribute('data-mode'); renderOpname(); });
+    });
+    $('s-tgl').addEventListener('change', renderOpname);
+    $('f-opname').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var box = $('s-msg'), items = [], bad = '';
+      Array.prototype.forEach.call($('s-list').querySelectorAll('.cnt'), function (row) {
+        var raw = row._inp.value.trim();
+        if (!raw) return;
+        var q = parseNum(raw);
+        if (q === '' || isNaN(q) || !row._sel.value) { if (!bad) bad = row._it.sku; return; }
+        items.push({ sku: row._it.sku, qty: q, satuan: row._sel.value });
+      });
+      if (bad) return msg(box, 'err', 'Jumlah atau satuan ' + shortName(bad) + ' belum terbaca. Isi dengan angka saja.');
+      if (!items.length) return msg(box, 'err', 'Isi dulu jumlah barang yang dihitung.');
+      submit(this, box, 'opname', { tanggal: $('s-tgl').value, items: items, catatan: $('s-cat').value }, function (res) {
+        OP.vals = {}; $('s-cat').value = '';
+        saved(box, res, 'Hitungan ' + res.n + ' barang');
+      });
+    });
+
+    Array.prototype.forEach.call(document.querySelectorAll('[data-go]'), function (b) {
+      b.addEventListener('click', function () { $(b.getAttribute('data-go')).scrollIntoView({ block: 'start', behavior: 'smooth' }); });
+    });
+    $('refresh').addEventListener('click', function () { start(true).then(function (ok) { if (ok) toast('Data terbaru sudah dimuat'); }); });
+    $('logout').addEventListener('click', function () { call('logout').catch(function () {}); S.boot = null; toLogin(''); });
+  }
+
+  /* ---------- mulai ---------- */
+  $('l-go').addEventListener('click', doLogin);
+  $('l-pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
+  $('pk-close').addEventListener('click', closePicker);
+  $('picker').addEventListener('click', function (e) { if (e.target === this) closePicker(); });
+  $('pk-q').addEventListener('input', function () { drawPicker(this.value); });
+
+  var saved0 = stored();
+  if (saved0 && saved0.token) { S.token = saved0.token; S.name = saved0.name; start(false); }
+  else toLogin('');
+})();
+</script>
+</body>
+</html>
