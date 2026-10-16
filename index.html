@@ -267,7 +267,7 @@
       <button class="chip" type="button" data-go="sec-brief">☀ Brief <i id="n-brief" hidden></i></button>
       <button class="chip" type="button" data-go="sec-order" id="chip-order" hidden>Pembelian baru</button>
       <button class="chip" type="button" data-go="sec-plan" id="chip-plan" hidden>Rencana produksi</button>
-      <button class="chip" type="button" data-go="sec-topup" id="chip-topup" hidden>Top up kas</button>
+      <button class="chip" type="button" data-go="sec-topup" id="chip-topup">Uang masuk kas</button>
       <button class="chip" type="button" data-go="sec-kas">Belanja kas</button>
       <button class="chip" type="button" data-go="sec-sampai">Barang sampai <i id="n-orders" hidden></i></button>
       <button class="chip" type="button" data-go="sec-keluar">Barang keluar</button>
@@ -334,10 +334,10 @@
       </form>
     </section>
 
-    <!-- ★ · TOP UP KAS KECIL (hanya Sicillia) -->
-    <section id="sec-topup" class="card own" hidden>
-      <div class="sec-head"><div class="num own-num">★</div><div>
-        <h2>Top up kas kecil</h2><p>Isi setiap kali Sicillia menambah uang kas kecil. Masuk ke kolom Masuk Rp, saldo di atas langsung bertambah.</p></div></div>
+    <!-- + · UANG MASUK KAS KECIL (semua staff, v1.5.1) -->
+    <section id="sec-topup" class="card">
+      <div class="sec-head"><div class="num">+</div><div>
+        <h2>Uang masuk kas kecil</h2><p>Isi setiap kali ada uang masuk ke kas kecil — top up dari Sicillia, deposit, dll. Masuk ke kolom Masuk Rp, saldo di atas langsung bertambah.</p></div></div>
       <form id="f-topup" novalidate>
         <label class="f"><span class="lb">Tanggal</span><input id="t-tgl" class="in" type="date"></label>
         <label class="f"><span class="lb">Uang masuk</span>
@@ -345,7 +345,7 @@
         <label class="f"><span class="lb">Jenis</span><select id="t-jenis" class="in">
           <option>Top up dari Sicillia</option><option>Deposit staff</option><option>Lainnya (tulis di keterangan)</option></select></label>
         <label class="f"><span class="lb">Keterangan <em>kalau perlu</em></span>
-          <input id="t-ket" class="in" type="text" maxlength="150" placeholder="mis. tunai ke Adit / transfer" autocomplete="off"></label>
+          <input id="t-ket" class="in" type="text" maxlength="150" placeholder="mis. tunai dari Sicillia / transfer" autocomplete="off"></label>
         <div class="f"><span class="lb">Foto bukti <em>kalau ada</em></span><div id="t-foto"></div></div>
         <div id="t-msg"></div>
         <button class="btn" type="submit">Simpan uang masuk</button>
@@ -834,11 +834,11 @@
     });
 
     var own = !!b.owner;
-    ['sec-order', 'chip-order', 'sec-plan', 'chip-plan', 'sec-topup', 'chip-topup'].forEach(function (id) { $(id).hidden = !own; });
+    ['sec-order', 'chip-order', 'sec-plan', 'chip-plan'].forEach(function (id) { $(id).hidden = !own; });
+    var tt = $('t-tgl'); tt.max = b.today; if (!tt.value) tt.value = b.today;   // v1.5.1 — uang masuk kas: semua staff
+    if (!tt._draw) dateEcho(tt); else tt._draw();
     if (own) {
       var ot = $('o-tgl'), oe = $('o-eta'), pt = $('pl-tgl');
-      var tt = $('t-tgl'); tt.max = b.today; if (!tt.value) tt.value = b.today;
-      if (!tt._draw) dateEcho(tt); else tt._draw();
       ot.max = b.today; if (!ot.value) ot.value = b.today;
       oe.min = ot.value;
       if (!pt.value) pt.value = b.today;
@@ -1609,7 +1609,7 @@
       });
     });
 
-    // ★ · top up kas kecil (Sicillia)
+    // + · uang masuk kas kecil (semua staff)
     $('t-rp').addEventListener('input', function () { this.value = fmtRp(digits(this.value).slice(0, 9)); });
     $('f-topup').addEventListener('submit', function (ev) {
       ev.preventDefault();
