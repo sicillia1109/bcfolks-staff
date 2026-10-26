@@ -57,6 +57,8 @@ input.big{height:50px;border:2px solid var(--brown);font-size:20px}
 .photo .shot{height:72px;border:2px dashed var(--field);border-radius:12px;background:#FFFDF8;font-size:14px;cursor:pointer}
 .photo img{max-height:160px;border-radius:10px;object-fit:cover}
 .photo input{display:none}
+.cols{display:grid;gap:14px;grid-template-areas:"t" "a" "l"}.cols>div{display:flex;flex-direction:column;gap:14px;min-width:0}.cols>.utama{grid-area:a}.cols>.st{grid-area:t}.cols>.sl{grid-area:l}
+@media(min-width:900px){main.wide{max-width:1180px}.cols{grid-template-columns:minmax(0,1fr) 380px;grid-template-areas:"a t" "a l";grid-template-rows:auto 1fr;align-items:start}}
 .todo{display:flex;align-items:center;gap:10px;min-height:56px;padding:8px 12px;border-radius:14px;background:#fff;border:1px solid var(--line)}
 .todo.done{background:var(--ok);border-color:var(--okb)}
 .todo input{width:24px;height:24px;accent-color:#2E7D46;flex-shrink:0}
@@ -86,7 +88,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
 <div id="app" hidden>
   <div class="hd">
     <div><div class="k">BCFOLKS · BUKU STAFF</div><h1 id="title">To-do hari ini</h1></div>
-    <div class="who"><b id="me"></b><button id="refresh" type="button">Muat ulang</button></div>
+    <div class="who"><b id="me"></b><button id="refresh" type="button" title="Baca ulang Buku Staff &amp; Overview, lalu hitung ulang">&#8635; Update</button></div>
   </div>
   <nav class="nav" id="nav" aria-label="Halaman"></nav>
   <main id="main"></main>
@@ -104,7 +106,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
   var PAGES = [['todo', '1 To-do', 'To-do hari ini'], ['kas', '2 Kas Kecil', 'Kas Kecil'], ['harian', '3 Produksi Harian', 'Produksi Harian'],
                ['masuk', '4 Barang Masuk', 'Barang Masuk'], ['olahan', '5 Bahan Olahan', 'Produksi Bahan Olahan'], ['pack', '6 Buka Pack & Waste', 'Buka Pack & Waste'],
                ['hitung', '7 Hitung Stok', 'Hitung Stok Harian']];
-  var OWN = [['o-todo', 'To-do saya', 'To-do Bu Sicillia'], ['o-plan', 'Rencana produksi', 'Rencana Produksi'], ['o-dash', 'Dashboard', 'Dashboard'], ['o-log', 'Aktivitas', 'Aktivitas Staff']];
+  var OWN = [['o-todo', 'To-do saya', 'To-do Bu Sicillia'], ['o-pesan', 'Pesanan Shopee', 'Pesanan Shopee & Supplier'], ['o-plan', 'Rencana produksi', 'Rencana Produksi'], ['o-dash', 'Dashboard', 'Dashboard'], ['o-log', 'Aktivitas', 'Aktivitas Staff']];
 
   /* ---------- alat ---------- */
   function $(id) { return document.getElementById(id); }
@@ -157,6 +159,9 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
   function today() { return S.boot ? S.boot.today : ''; }
   function item(sku) { var l = S.boot.items; for (var i = 0; i < l.length; i++) if (l[i].sku === sku) return l[i]; return null; }
   function nama(sku) { var it = item(sku); return it ? it.nama : sku; }
+  // Pesanan: judul besar = SKU + nama barang; nama toko / barang di Shopee kecil di bawahnya
+  function judulP(o) { var it = item(o.sku); return it ? o.sku + ' ' + it.nama : (o.nama || o.pilih || o.sku); }
+  function tokoP(o) { return item(o.sku) && o.nama ? o.nama : ''; }
   function lockBox(t) { return h('div', { class: 'lock' }, lockIcon(), t); }
   function lockIcon() { var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('width', '14'); s.setAttribute('height', '14'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = '<rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4" fill="none" stroke="currentColor" stroke-width="2"></path>'; return s; }
   function field(label, input) { return h('label', { class: 'f' }, label, input); }
@@ -181,6 +186,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
   function pasangCari(m) {
     // Dropdown barang: kotak cari di atas dropdown, isi dropdown ikut tersaring
     Array.prototype.forEach.call(m.querySelectorAll('select[data-cari]'), function (s) {
+      if (s._cari) return; s._cari = 1;   // jangan pasang kotak cari dua kali
       var semua = Array.prototype.map.call(s.options, function (o) { return { v: o.value, t: o.text }; });
       var box = cariBox('Cari barang (nama / SKU)…', function (q) {
         var cur = s.value, hasil = semua.filter(function (o) { return !o.v || cocok(o.v + ' ' + o.t, q); });
@@ -197,7 +203,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       s.parentNode.insertBefore(box, s);
     });
     // Daftar barang (baris yang bisa diklik): kotak cari di atas daftar
-    var rows = m.querySelectorAll('button.row');
+    var rows = m.querySelectorAll('button.row:not(.nocari)');
     if (rows.length > 3) {
       var first = rows[0], anchor = first.previousElementSibling && first.previousElementSibling.classList.contains('lbl') ? first.previousElementSibling : first;
       var kosong = note('info', 'Tidak ada yang cocok.'); kosong.hidden = true;
@@ -290,21 +296,24 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
         onclick: function () { go(p[0]); } }));
     });
   }
-  function go(page, sel) { if (page === 'buka' || page === 'waste') { S.packMode = page; page = 'pack'; } S.page = page; S.sel = sel == null ? null : sel; S.kasEdit = null; window.scrollTo(0, 0); render(); if (page === 'o-dash' || page === 'o-log') loadDash(); }
+  function go(page, sel) { if (page === 'buka' || page === 'waste') { S.packMode = page; page = 'pack'; } S.page = page; S.sel = sel == null ? null : sel; S.kasEdit = null; if (page !== 'hitung') S.ulang = null; window.scrollTo(0, 0); render(); if (page === 'o-dash' || page === 'o-log') loadDash(); }
   function render() {
     if (!S.boot) return;
     var all = PAGES.concat(OWN), t = all.filter(function (p) { return p[0] === S.page; })[0];
     $('title').textContent = t ? t[2] : ''; $('me').textContent = S.name;
     nav();
-    var m = $('main'); clear(m);
+    var m = $('main'); clear(m); m.className = S.page === 'todo' ? 'wide' : '';
     ({ todo: pTodo, kas: pKas, harian: pHarian, masuk: pMasuk, olahan: pOlahan, pack: pPack, hitung: pHitung,
-       'o-todo': oTodo, 'o-plan': oPlan, 'o-dash': oDash, 'o-log': oLog })[S.page](m);
+       'o-todo': oTodo, 'o-pesan': oPesan, 'o-plan': oPlan, 'o-dash': oDash, 'o-log': oLog })[S.page](m);
     pasangCari(m);
   }
 
   /* ---------- 1 To-do ---------- */
-  function pTodo(m) {
+  function pTodo(m0) {
     var d = S.boot.dyn, n = d.todos.filter(function (t) { return t.done; }).length;
+    var m = h('div', { class: 'utama' }), st = h('div', { class: 'st' }), side = h('div', { class: 'sl' });
+    add(m0, h('div', { class: 'cols' }, st, m, side));
+    sisiTally(st, d);
     add(m, [h('div', {}, h('div', { class: 'lbl', text: 'To-do hari ini' }), h('div', { class: 'hint', text: n + ' dari ' + d.todos.length + ' selesai. Tulisan merah bisa diklik.' }))]);
     var lastShift = null, LBL = S.boot.shiftLabel || {};
     d.todos.forEach(function (t) {
@@ -333,7 +342,40 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       else { var b = h('button', { class: 'btn', type: 'button', text: 'Ingatkan Bu Sicillia' }), bx = h('div');
         b.onclick = function () { save(b, bx, 'ingatkan', { text: d.lows.map(function (l) { return l.nama; }).join(', ') }); }; add(c, [b, bx]); }
     }
-    add(m, c);
+    add(side, c);
+  }
+
+  /** Kolom kanan To-do: hal-hal yang tidak tally. */
+  function sisiTally(side, d) {
+    var T = d.tally || { rows: [] }, own = S.boot.owner, sat = function (x) { return x === 'bungkus asal' ? 'bks' : x; };
+    var telat = d.orders.filter(function (o) { return o.telat; });
+    var buka = T.rows.filter(function (r) { return !r.ulang; });
+    var c = h('div', { class: 'card red' }, h('div', { class: 'lbl', style: 'color:var(--red)', text: 'Tidak tally · ' + (buka.length + telat.length) + ' perlu dicek' }));
+    // 1. Stok tidak tally
+    add(c, h('div', { class: 'lbl', style: 'margin-top:4px', text: 'Stok tidak tally' + (T.sampai ? ' · hitungan ' + dmy(T.sampai) : '') }));
+    if (T.lama) add(c, h('div', { class: 'hint', text: 'Hitungan stok terakhir ' + dmy(T.sampai) + '. Tally muncul lagi setelah hitung stok saat tutup.' }));
+    else if (T.tunggu) add(c, h('div', { class: 'hint', text: 'Tally hitungan ' + dmy(T.sampai) + ' menunggu penjualan hari itu ditempel Bu Sicillia.' }));
+    else if (!T.rows.length) add(c, h('div', { class: 'hint', text: T.sampai ? 'Semua barang harian tally ✓' : 'Belum ada 2 hari hitungan untuk dibandingkan.' }));
+    T.rows.forEach(function (r) {
+      var u = r.ulang, kurang = r.selisih < 0;
+      var ada = !u && r.selisih > 0 && d.orders.some(function (o) { return o.sku === r.sku && !o.sampai; });
+      var sub = u ? '✓ Dihitung ulang' + (u.oleh ? ' oleh ' + u.oleh : '') + ': ' + fmt(r.akhir) + ' ' + sat(r.sat) + ' · ' + u.alasan + (r.status === 'Tidak tally' ? ' · masih selisih' : ' · sekarang tally')
+        : 'Hitungan ' + fmt(r.akhir) + ' ' + sat(r.sat) + ' · ' + (kurang ? 'lebih SEDIKIT' : 'lebih BANYAK') + ' dari catatan' + (ada ? ' · ada pesanan belum dicatat datang' : '') + ' · klik untuk hitung ulang';
+      if (own) sub += ' · seharusnya ' + fmt(r.seharusnya) + ', selisih ' + (r.selisih > 0 ? '+' : '') + fmt(r.selisih);
+      add(c, h('button', { type: 'button', class: 'row nocari' + (u ? ' done' : ' late'), onclick: function () { S.ulang = r; go('hitung', r.sku); } },
+        h('div', { class: 'tx' }, h('span', { class: 'nm', text: r.nama }), h('span', { class: 'sub', text: sub })),
+        h('span', { text: '›', 'aria-hidden': 'true', style: 'font-size:20px' })));
+    });
+    // 2. Barang sudah lewat tanggal datang tapi belum dicatat
+    add(c, h('div', { class: 'lbl', style: 'margin-top:8px', text: 'Barang datang, belum dicatat' }));
+    if (!telat.length) add(c, h('div', { class: 'hint', text: 'Tidak ada pesanan yang lewat tanggal perkiraan.' }));
+    telat.forEach(function (o) {
+      add(c, h('button', { type: 'button', class: 'row nocari late', onclick: function () { go('masuk', String(o.row)); } },
+        h('div', { class: 'tx' }, h('span', { class: 'nm', text: judulP(o) }),
+          h('span', { class: 'sub', text: (tokoP(o) ? tokoP(o) + ' · ' : '') + 'Pesan ' + fmt(o.qty) + ' ' + sat(o.sat) + ' · perkiraan ' + dmy(o.eta) + ' · kalau sudah sampai, klik & catat di Barang Masuk' })),
+        h('span', { text: '›', 'aria-hidden': 'true', style: 'font-size:20px' })));
+    });
+    add(side, c);
   }
 
   /* ---------- 2 Kas Kecil ---------- */
@@ -458,8 +500,8 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       open.concat(got).forEach(function (o) {
         var done = !!o.sampai;
         add(m, h('button', { type: 'button', class: 'row' + (done ? ' done' : o.telat ? ' late' : ''), onclick: function () { go('masuk', String(o.row)); } },
-          h('div', { class: 'tx' }, h('span', { class: 'nm', text: o.nama || nama(o.sku) }),
-            h('span', { class: 'sub', text: [o.noPes ? 'No ' + o.noPes : '', o.sku, 'pesan ' + fmt(o.qty) + ' ' + o.sat, done ? 'datang ' + dmy(o.sampai) : (o.eta ? 'perkiraan ' + dmy(o.eta) : '')].filter(Boolean).join(' · ') })),
+          h('div', { class: 'tx' }, h('span', { class: 'nm', text: judulP(o) }),
+            h('span', { class: 'sub', text: [tokoP(o), o.noPes ? 'No ' + o.noPes : '', 'pesan ' + fmt(o.qty) + ' ' + o.sat, done ? 'datang ' + dmy(o.sampai) : (o.eta ? 'perkiraan ' + dmy(o.eta) : '')].filter(Boolean).join(' · ') })),
           h('span', { class: 'chip ' + (done ? 'ok' : o.telat ? 'bad' : ''), text: done ? (o.status || 'Diterima') : o.telat ? 'Terlambat' : 'Menunggu' })));
       });
       return;
@@ -472,7 +514,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     var kond = sel(S.boot.kondisi.map(function (x) { return [x, x]; }), o.kondisi || 'OK');
     var cat = h('textarea', { class: 'i', rows: 3, placeholder: 'Tanggal exp, warna lain, kemasan rusak, dll' }); cat.value = String(o.cat || '').replace(/^[^:]+:\s*/, '');
     var foto = photoField('Foto produk yang datang');
-    add(c, [h('div', {}, h('h2', { text: o.nama || nama(o.sku) }), h('div', { class: 'sub', text: o.pilih + ' · pesan ' + fmt(o.qty) + ' ' + o.sat })),
+    add(c, [h('div', {}, h('h2', { text: judulP(o) }), h('div', { class: 'sub', text: [tokoP(o), o.noPes ? 'No ' + o.noPes : '', 'pesan ' + fmt(o.qty) + ' ' + o.sat].filter(Boolean).join(' · ') })),
       field('Tanggal sampai', tgl), h('div', { class: 'g2' }, field('Qty diterima', qty), h('div', { class: 'f' }, h('span', { style: 'font-size:13px;font-weight:600', text: 'Satuan (terkunci)' }), lockBox(o.sat))),
       foto, field('Status', kond), field('Catatan', cat)]);
     var b = h('button', { class: 'btn', type: 'button', text: 'Simpan barang masuk' });
@@ -684,11 +726,17 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       add(m, field('Barang lain', other));
       return;
     }
-    var it = item(S.sel); add(m, back()); if (!it) return;
+    var U = S.ulang && S.ulang.sku === S.sel ? S.ulang : null;
+    var it = item(S.sel);
+    add(m, U ? h('button', { class: 'back', type: 'button', text: '← Kembali ke To-do', onclick: function () { S.ulang = null; go('todo'); } }) : back()); if (!it) return;
     var md = modeOf(it), isi = it.isi || 1;
-    var ex = counted[it.sku] || d.hitung.filter(function (x) { return x.sku === it.sku && x.tgl === today(); })[0];
+    var ex = U ? null : counted[it.sku] || d.hitung.filter(function (x) { return x.sku === it.sku && x.tgl === today(); })[0];
     if (ex && ex.total !== '') add(m, note('ok', 'Sudah dihitung: ' + fmt(ex.total) + ' ' + it.sat + ' (' + ex.oleh + '). Ubah angka lalu Simpan untuk membetulkan.'));
-    var c = h('div', { class: 'card' }), box = h('div'), tgl = dateInp();
+    if (U) add(m, note('warn', 'HITUNG ULANG · hitungan ' + dmy(U.tgl) + ': ' + fmt(U.akhir) + ' ' + it.sat + ', ' + (U.selisih < 0 ? 'lebih SEDIKIT' : 'lebih BANYAK') +
+      ' dari catatan. Cek semua tempat (chiller, freezer, gudang, station, rak atas), hitung lagi pelan-pelan, tulis jumlah yang BENAR, lalu pilih alasan perkiraannya.' +
+      (U.ulang ? ' Sudah pernah dihitung ulang (' + U.ulang.alasan + '); simpan lagi untuk membetulkan.' : '')));
+    var c = h('div', { class: 'card' }), box = h('div'), tgl = dateInp(U ? U.tgl : null);
+    if (U) tgl.disabled = true;
     // nilai awal untuk dibetulkan
     var sisaAwal = '';
     if (ex) {
@@ -700,7 +748,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     var bks = inp({ inputmode: 'decimal', value: ex && ex.bks !== '' ? String(ex.bks) : '' }), sisa = inp({ inputmode: 'decimal', big: true, value: sisaAwal });
     var tot = h('b'), cat = inp({ placeholder: 'opsional', value: ex ? String(ex.cat || '').replace(/^(⚖[\d.,]+ g( \(belum dikonversi\))?|\([\d.,]+ bks terbuka\))( · )?/, '') : '' });
     var unit = it.sat === 'bungkus asal' ? 'bungkus' : it.sat;
-    var pv = prevOf(it), cekBuka = h('div'), pvCard = null;
+    var pv = U ? null : prevOf(it), cekBuka = h('div'), pvCard = null;
     if (pv) {
       pvCard = h('div', { class: 'card blue' }, h('span', { class: 'lbl', text: 'Hitungan sebelumnya · ' + dmy(pv.tgl) + (pv.oleh ? ' · ' + pv.oleh : '') }),
         h('div', { class: 'g2' },
@@ -738,8 +786,23 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       md === 'bungkus' ? h('div', { style: 'display:flex;gap:8px' }, [['¼', '0.25'], ['½', '0.5'], ['¾', '0.75'], ['0', '0']].map(function (f) {
         return h('button', { type: 'button', class: 'btn2', style: 'flex:1', text: f[0] === '0' ? 'Tidak ada' : f[0], onclick: function () { sisa.value = f[1]; upd(); } }); })) : null,
       h('div', { style: 'display:flex;justify-content:space-between;font-size:16px;gap:8px' }, h('span', { text: 'Total stok' }), tot), cekBuka, field('Catatan', cat)]);
-    var b = h('button', { class: 'btn', type: 'button', text: 'Simpan hitungan' });
-    b.onclick = function () { save(b, box, 'hitung', { row: ex ? ex.row : 0, sku: it.sku, tgl: tgl.value, bks: bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: cat.value }, function () { S.sel = null; }); };
+    if (U) {
+      c.removeChild(c.lastChild);   // kolom Catatan biasa diganti alasan + keterangan
+      var als = sel([['', 'Pilih alasan…']].concat((S.boot.alasanUlang || []).map(function (x) { return [x, x]; })), U.ulang ? U.ulang.alasan : '');
+      var ket = h('textarea', { class: 'i', rows: 2, placeholder: 'Contoh: 1 bungkus ada di freezer belakang' }); ket.value = U.ulang ? U.ulang.ket : '';
+      add(c, [field('Alasan perkiraan kenapa tidak tally', als), field('Keterangan', ket)]);
+    }
+    var b = h('button', { class: 'btn', type: 'button', text: U ? 'Simpan hitung ulang' : 'Simpan hitungan' });
+    b.onclick = function () {
+      if (U) {
+        clear(box);
+        if (bks.value === '' && (md === 'utuh' || sisa.value === '')) return add(box, note('err', 'Isi jumlah yang dihitung ulang.'));
+        if (!als.value) return add(box, note('err', 'Pilih alasan perkiraan kenapa tidak tally.'));
+        return save(b, box, 'hitung', { row: U.hrow || 0, sku: it.sku, tgl: U.tgl, bks: bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: '', ulang: { alasan: als.value, ket: ket.value } },
+          function () { S.ulang = null; S.page = 'todo'; S.sel = null; window.scrollTo(0, 0); });
+      }
+      save(b, box, 'hitung', { row: ex ? ex.row : 0, sku: it.sku, tgl: tgl.value, bks: bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: cat.value }, function () { S.sel = null; });
+    };
     add(c, [b, box]); add(m, c); upd();
   }
 
@@ -769,6 +832,71 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     });
     add(m, c2);
   }
+  /* ---------- Pesanan Shopee / supplier (Bu Sicillia) ---------- */
+  function katOf(sku) { return /^(BBF|BBD|BO|CO|RTE)/.test(sku) ? 'CO001 Ingredients' : /^BBP/.test(sku) ? 'CO002 Packaging' : 'OP006 Supplies, Miscellaneous & Administration'; }
+  function satOf(sku) { var it = item(sku); if (!it) return 'pcs'; return it.perBks || it.isi > 1 ? 'bungkus asal' : it.sat; }
+  function ymdPlus(n) { var d = new Date(today() + 'T12:00:00'); d.setDate(d.getDate() + n); return d.toISOString().slice(0, 10); }
+  function oPesan(m) {
+    var d = S.boot.dyn, B = S.boot, ed = S.sel ? d.orders.filter(function (o) { return String(o.row) === String(S.sel); })[0] : null;
+    var lainKode = (B.pesanLain || 'X001').split(' ')[0];
+    var c = h('div', { class: 'card' }, h('h2', { text: ed ? 'Betulkan pesanan' : 'Pesanan baru' }),
+      h('div', { class: 'hint', text: 'Masuk ke Buku Staff › Pesanan Barang (kolom biru). Staff melihatnya di 4 Barang Masuk dan mencatat saat paket datang.' }));
+    if (ed) add(c, note('ok', 'Membetulkan: ' + judulP(ed) + (tokoP(ed) ? ' (' + tokoP(ed) + ')' : '') + '. Ubah lalu Simpan.'));
+    var tgl = dateInp(ed && ed.tglOrder), eta = inp({ type: 'date', value: ed && ed.eta ? ed.eta : ymdPlus(3) });
+    var noPes = inp({ placeholder: 'opsional, mis. 2610217DR4X0E3', value: ed ? ed.noPes : '' });
+    var bayar = sel((B.bayar || []).map(function (x) { return [x, x]; }), ed ? ed.bayar : '', '(pilih)');
+    add(c, [h('div', { class: 'g2' }, field('Tanggal order', tgl), field('Estimasi tiba', eta)), h('div', { class: 'g2' }, field('No pesanan Shopee', noPes), field('Dibayar dari', bayar))]);
+    var linesBox = h('div', { style: 'display:flex;flex-direction:column;gap:12px' }), lines = [];
+    var opts = itemOpts().concat([[lainKode, B.pesanLain || 'X001 Bukan stok: supplies / opex']]);
+    function addLine(v) {
+      v = v || {};
+      var box = h('div', { class: 'card', style: 'background:var(--cream)' });
+      var skuSel = sel(opts, v.sku || '', 'Pilih barang…');
+      var nama = inp({ placeholder: 'Nama di Shopee / keterangan', value: v.nama || '' });
+      var qty = inp({ inputmode: 'decimal', value: v.qty != null && v.qty !== '' ? String(v.qty) : '' });
+      var sat = sel((B.satuan || ['pcs', 'gram', 'ml', 'bungkus asal']).map(function (x) { return [x, x]; }), v.sat || 'bungkus asal');
+      var total = inp({ inputmode: 'numeric', placeholder: 'opsional', value: v.total != null && v.total !== '' ? String(v.total) : '' });
+      var kat = sel((B.kategori || []).map(function (x) { return [x, x]; }), v.kat || '', '(opsional)');
+      var info = h('div', { class: 'hint' });
+      function upd(auto) {
+        var it = item(skuSel.value); info.textContent = it ? it.pers || '' : skuSel.value === lainKode ? 'Bukan stok: isi nama barangnya.' : '';
+        if (auto && skuSel.value) { sat.value = skuSel.value === lainKode ? 'pcs' : satOf(skuSel.value); if (!v.kat) kat.value = katOf(skuSel.value); }
+      }
+      skuSel.onchange = function () { upd(true); };
+      var del = ed ? null : h('button', { type: 'button', class: 'link', text: 'Hapus barang ini', onclick: function () { lines.splice(lines.indexOf(L), 1); linesBox.removeChild(box); } });
+      add(box, [field('Barang (SKU)', skuSel), info, field('Nama di Shopee / keterangan', nama),
+        h('div', { class: 'g2' }, field('Qty pesan', qty), field('Satuan', sat)), h('div', { class: 'g2' }, field('Total Rp', total), field('Kategori finance', kat)), del]);
+      var L = { get: function () { return { sku: skuSel.value, nama: nama.value, qty: qty.value, sat: sat.value, total: total.value, kat: kat.value }; } };
+      lines.push(L); add(linesBox, box); pasangCari(box); upd(false);
+    }
+    if (ed) addLine({ sku: ed.sku, nama: ed.nama, qty: ed.qty, sat: ed.sat, total: ed.total, kat: ed.kat }); else addLine();
+    add(c, [h('div', { class: 'lbl', style: 'margin-top:6px', text: 'Barang' }), linesBox]);
+    if (!ed) add(c, h('button', { type: 'button', class: 'btn2', text: '+ Tambah barang di pesanan ini', onclick: function () { addLine(); } }));
+    var box = h('div'), b = h('button', { class: 'btn', type: 'button', text: ed ? 'Simpan perubahan' : 'Simpan pesanan' });
+    b.onclick = function () {
+      var ls = lines.map(function (l) { return l.get(); });
+      clear(box);
+      if (ls.some(function (l) { return !l.sku; })) return add(box, note('err', 'Pilih barang di setiap baris.'));
+      save(b, box, 'pesan', { row: ed ? ed.row : 0, tgl: tgl.value, eta: eta.value, noPes: noPes.value, bayar: bayar.value, lines: ls }, function () { S.sel = null; });
+    };
+    add(c, [b, box]);
+    if (ed) add(c, h('button', { type: 'button', class: 'back', text: '← Batal, kembali ke pesanan baru', onclick: function () { S.sel = null; render(); } }));
+    add(m, c);
+    // Daftar pesanan yang ditunggu
+    var open = d.orders.filter(function (o) { return !o.sampai; }), got = d.orders.filter(function (o) { return o.sampai; });
+    var c2 = h('div', { class: 'card' }, h('h2', { text: 'Pesanan ditunggu · ' + open.length }), h('div', { class: 'hint', text: 'Klik untuk membetulkan. Merah = lewat estimasi tiba.' }));
+    if (!open.length) add(c2, h('div', { class: 'hint', text: 'Tidak ada pesanan yang ditunggu.' }));
+    open.concat(got.slice(-5).reverse()).forEach(function (o) {
+      var done = !!o.sampai;
+      add(c2, h('button', { type: 'button', class: 'row nocari' + (done ? ' done' : o.telat ? ' late' : ''), onclick: function () { S.sel = String(o.row); window.scrollTo(0, 0); render(); } },
+        h('div', { class: 'tx' }, h('span', { class: 'nm', text: judulP(o) }),
+          h('span', { class: 'sub', text: [tokoP(o), o.noPes ? 'No ' + o.noPes : '', fmt(o.qty) + ' ' + o.sat, o.total !== '' && o.total != null ? rp(Number(o.total) || 0) : '',
+            done ? 'datang ' + dmy(o.sampai) : (o.eta ? 'tiba ' + dmy(o.eta) : '')].filter(Boolean).join(' · ') })),
+        h('span', { class: 'chip ' + (done ? 'ok' : o.telat ? 'bad' : ''), text: done ? (o.status || 'Diterima') : o.telat ? 'Terlambat' : 'Menunggu' })));
+    });
+    add(m, c2);
+  }
+
   function oPlan(m) {
     var d = S.boot.dyn, R = S.boot.recipes;
     var c = h('div', { class: 'card' }, h('h2', { text: 'Bahan olahan' }), h('div', { class: 'hint', text: 'Pilih dulu, lalu isi rencana. Hijau = staff sudah menyimpan produksinya.' }));
@@ -834,7 +962,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
         h('td', { text: r.seharusnya != null ? fmt(r.seharusnya) : '–' }), h('td', { text: r.akhir != null ? fmt(r.akhir) : '–' }),
         h('td', { style: 'font-weight:700', text: r.selisih != null ? (r.selisih > 0 ? '+' : '') + fmt(r.selisih) + ' ' + r.sat : '–' }),
         h('td', {}, h('span', { class: 'chip ' + (r.status === 'Tally' ? 'ok' : r.status === 'Tidak tally' ? 'bad' : ''), text: r.status })),
-        h('td', { class: 'sub', text: r.why || (r.jual != null ? 'jual ' + fmt(r.jual) + ' · masuk ' + fmt(r.masuk) + ' · produksi ' + fmt(r.produksi) + ' · waste ' + fmt(r.waste) : '') })));
+        h('td', { class: 'sub', text: (r.ulang ? '↺ Dihitung ulang' + (r.ulang.oleh ? ' (' + r.ulang.oleh + ')' : '') + ': ' + r.ulang.alasan + (r.ulang.ket ? ' – ' + r.ulang.ket : '') + (r.ulang.sebelumnya ? ', sebelumnya ' + r.ulang.sebelumnya : '') + '. ' : '') + (r.why || (r.jual != null ? 'jual ' + fmt(r.jual) + ' · masuk ' + fmt(r.masuk) + ' · produksi ' + fmt(r.produksi) + ' · waste ' + fmt(r.waste) : '')) })));
     });
     add(m, h('div', { class: 'card' }, h('h2', { text: 'Tally per barang' }), h('div', { class: 'tbl' }, h('table', {}, h('thead', {}, h('tr', {}, ['Barang', 'Hitungan awal', 'Seharusnya', 'Hitungan akhir', 'Selisih', 'Status', 'Kemungkinan penyebab'].map(function (t) { return h('th', { text: t }); }))), tb))));
     cekCards(m, x.cek);
@@ -853,12 +981,44 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       (L[1].length ? L[1] : ['–']).forEach(function (t) { add(c, h('div', { style: 'font-size:14px;line-height:1.45;padding-left:12px;border-left:3px solid var(--line)', text: t })); });
       add(m, c);
     });
-    add(m, h('button', { class: 'btn2', type: 'button', text: 'Hitung ulang tally', onclick: function () { S.dash = null; render(); loadDash(); } }));
+    add(m, h('button', { class: 'btn2', type: 'button', text: '\u21bb Update dari kedua buku & hitung ulang', onclick: function () { segarkan(); } }));
   }
   function cekCards(m, c) {
     if (!c) return;
     if (c.err) { add(m, note('err', 'Cek mingguan gagal dihitung: ' + c.err)); return; }
     var th = function (cols) { return h('thead', {}, h('tr', {}, cols.map(function (t) { return h('th', { text: t }); }))); };
+    // Nilai inventori
+    var nv = c.nilai;
+    if (nv) {
+      var vc = h('div', { class: 'card' }, h('span', { class: 'lbl', text: 'Nilai inventori' + (nv.terbaru ? ' \u00b7 hitungan s/d ' + dmy(nv.terbaru) : '') }),
+        h('h2', { style: 'font-size:30px', text: rp(nv.total) }),
+        h('div', { class: 'hint', text: 'Bahan, minuman, packaging & olahan: hitungan stok terakhir tiap barang \u00d7 harga beli terakhir di Overview.' + (nv.supplies ? ' Supplies (opex) terpisah: ' + rp(nv.supplies) + '.' : '') }));
+      if (nv.omzet) {
+        var o = nv.omzet;
+        add(vc, h('div', { class: 'card', style: 'background:var(--cream)' },
+          h('span', { class: 'lbl', text: 'Kalau dijual dengan pola sekarang' }),
+          h('h2', { style: 'font-size:24px', text: '\u2248 ' + rp(o.setara) + ' omzet' }),
+          h('div', { text: '\u2248 ' + fmt(o.cukupHari) + ' hari jualan (rata-rata ' + rp(o.perHari) + ' / hari, ' + o.hari + ' hari jualan dalam 30 hari terakhir)' }),
+          h('div', { class: 'hint', text: 'Nilai stok \u00f7 COGS resep ' + fmt(o.cogsPct) + '% (dari penjualan 30 hari terakhir \u00d7 resep Overview). Perkiraan rata-rata: barang di bawah bisa habis lebih dulu.' })));
+      }
+      if (nv.habis && nv.habis.length) {
+        var th2 = h('tbody');
+        nv.habis.forEach(function (x) { add(th2, h('tr', {}, h('td', {}, h('b', { text: x.nama }), h('div', { class: 'sub', text: fmt(x.stok) + ' ' + (x.sat === 'bungkus asal' ? 'bks' : x.sat) + ' \u00b7 pakai \u00b1' + fmt(x.perHari) + '/hari' })),
+          h('td', { style: 'text-align:right;font-weight:700;color:' + (x.hari < 3 ? 'var(--red)' : 'inherit'), text: x.hari < 0.1 ? 'habis' : fmt(x.hari) + ' hari' }))); });
+        add(vc, [h('div', { class: 'lbl', style: 'margin-top:8px', text: 'Paling cepat habis' }), h('div', { class: 'tbl' }, h('table', {}, th(['Barang', 'Cukup']), th2))]);
+      }
+      if (nv.lengkap && nv.lengkap.length) add(vc, h('div', { class: 'sub', text: 'Hitungan lengkap: ' + nv.lengkap.map(function (x) { return dmy(x.tgl).slice(0, 5) + ' ' + rp(x.rp); }).join(' \u2192 ') }));
+      var tg = h('tbody');
+      nv.grup.forEach(function (g) { add(tg, h('tr', {}, h('td', { text: g.nama }), h('td', { class: 'sub', text: g.n + ' barang' }), h('td', { style: 'text-align:right;font-weight:700', text: rp(g.rp) }))); });
+      add(vc, h('div', { class: 'tbl' }, h('table', {}, th(['Kelompok', '', 'Nilai']), tg)));
+      var tt = h('tbody');
+      nv.top.forEach(function (b) { add(tt, h('tr', {}, h('td', {}, h('b', { text: b.nama }), h('div', { class: 'sub', text: b.sku + ' \u00b7 ' + dmy(b.tgl).slice(0, 5) })),
+        h('td', { text: fmt(b.qty) + ' ' + (b.sat === 'bungkus asal' ? 'bks' : b.sat) }), h('td', { style: 'text-align:right', text: rp(b.rp) }))); });
+      add(vc, [h('div', { class: 'lbl', style: 'margin-top:8px', text: '10 nilai terbesar' }), h('div', { class: 'tbl' }, h('table', {}, th(['Barang', 'Stok', 'Nilai']), tt))]);
+      if (nv.tanpaHarga.length) add(vc, note('warn', 'Belum ada harga di Overview (nilai dihitung Rp 0): ' + nv.tanpaHarga.join(', ') + '.'));
+      if (nv.lama) add(vc, note('info', nv.lama + ' barang hitungan terakhirnya lebih dari 8 hari lalu.'));
+      add(m, vc);
+    }
     // Food cost %
     var f = c.food, fc = h('div', { class: 'card' }, h('span', { class: 'lbl', text: 'Mingguan · Food cost %' }));
     if (f && f.pct != null) {
@@ -932,7 +1092,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       S.token = d.token; S.name = d.name; store({ token: d.token, name: d.name }); start();
     }).catch(function (e) { btn.disabled = false; btn.textContent = 'Masuk'; add(box, note('err', e.message)); });
   }
-  function start() {
+  function start(fresh) {
     $('login').hidden = true;
     if (!S.boot) {   // tampilkan data terakhir dulu (hari yang sama), lalu perbarui di belakang layar
       var c = bootLoad();
@@ -941,16 +1101,18 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     if (!S.boot) { $('boot').hidden = false; $('app').hidden = true; }
     $('refresh').classList.add('spin');
     var t0 = Date.now(), adaTampilan = !!S.boot && !$('app').hidden;
-    return call('boot', {}).then(function (d) {
+    return call('boot', fresh ? { fresh: true } : {}).then(function (d) {
+      if (fresh) toast('Sudah di-update dari Buku Staff & Overview \u2713');
       S.boot = d; S.name = d.name; bootSave(); $('boot').hidden = true; $('app').hidden = false; $('refresh').classList.remove('spin');
       if (!(adaTampilan && sibuk(t0))) render();
     }).catch(function (e) { $('refresh').classList.remove('spin'); if (e.code === 'AUTH') return toLogin(e.message);
       if (adaTampilan) return toast(e.message);   // data terakhir tetap tampil
-      $('boot').hidden = false; clear($('boot')); add($('boot'), [h('h2', { text: 'Tidak bisa memuat' }), note('err', e.message), h('button', { class: 'btn', type: 'button', text: 'Coba lagi', onclick: start })]); });
+      $('boot').hidden = false; clear($('boot')); add($('boot'), [h('h2', { text: 'Tidak bisa memuat' }), note('err', e.message), h('button', { class: 'btn', type: 'button', text: 'Coba lagi', onclick: function () { start(); } })]); });
   }
   $('l-go').addEventListener('click', doLogin);
   $('l-pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') doLogin(); });
-  $('refresh').addEventListener('click', function () { S.dash = null; start().then(function () { if (S.page === 'o-dash' || S.page === 'o-log') loadDash(); }); });
+  function segarkan() { if ($('refresh').classList.contains('spin')) return; S.dash = null; if (S.page === 'o-dash' || S.page === 'o-log') render(); start(true).then(function () { if (S.page === 'o-dash' || S.page === 'o-log') loadDash(); }); }
+  $('refresh').addEventListener('click', segarkan);
   $('me').addEventListener('click', function () { if (confirm('Keluar dari aplikasi?')) { call('logout', {}).finally(function () { toLogin(''); }); } });
   var st = stored();
   if (st && st.token) { S.token = st.token; S.name = st.name; start(); } else toLogin('');
