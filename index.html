@@ -610,10 +610,11 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     return Math.round(n * 100) / 100;
   }
   function caraTxt(it) {
-    return { utuh: 'hitung bungkus utuh saja', timbang: 'timbang (gram + wadah)', bungkus: 'per bungkus ¼ ½ ¾', gram: 'timbang semua (gram)' }[modeOf(it)] || '';
+    return { utuh: 'hitung bungkus utuh saja', timbang: 'timbang (gram + wadah)', bungkus: 'per bungkus ¼ ½ ¾', gram: 'timbang semua (gram)', tsemua: 'timbang semua (gram)' }[modeOf(it)] || '';
   }
   // Barang satuan gram tanpa cara khusus di Overview: staff menimbang semuanya, isi 1 angka total gram
-  function modeOf(it) { var m = it.mode || 'biasa'; return m === 'biasa' && it.perBks ? 'bungkus' : m === 'biasa' && it.sat === 'gram' ? 'gram' : m; }
+  // Barang timbang yang 1 bungkus = 1 pcs (topping ziplock, lumpia, pangsit, kraft): timbang semuanya sekaligus, app mengubah ke pcs
+  function modeOf(it) { var m = it.mode || 'biasa'; return m === 'biasa' && it.perBks ? 'bungkus' : m === 'biasa' && it.sat === 'gram' ? 'gram' : m === 'timbang' && (it.isi || 1) === 1 ? 'tsemua' : m; }
   function prevTxt(it) {
     var p = prevOf(it); if (!p) return '';
     return fmt(p.total) + ' ' + (it.sat === 'bungkus asal' ? 'bks' : it.sat) + ' (' + dmy(p.tgl).slice(0, 5) + ')';
@@ -742,7 +743,7 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     var sisaAwal = '';
     if (ex) {
       var g = String(ex.cat || '').match(/^⚖([\d.,]+) g/);
-      if (md === 'timbang' && g) sisaAwal = g[1];
+      if ((md === 'timbang' || md === 'tsemua') && g) sisaAwal = g[1];
       else if (md === 'gram' && ex.total !== '') sisaAwal = String(ex.total);
       else if (md === 'bungkus' && ex.sisa !== '') sisaAwal = String(bulat(Number(ex.sisa) / isi));
       else if (ex.sisa !== '') sisaAwal = String(ex.sisa);
@@ -768,11 +769,11 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       if (md === 'utuh') return 0;
       if (md === 'gram') return v;
       if (md === 'bungkus') return v * isi;
-      if (md === 'timbang') { if (!(it.full > 0)) return null; var per = (it.full - (it.tare || 0)) / isi; return per > 0 ? Math.max(0, v - (it.tare || 0)) / per : null; }
+      if (md === 'timbang' || md === 'tsemua') { if (!(it.full > 0)) return null; var per = (it.full - (it.tare || 0)) / isi; return per > 0 ? Math.max(0, v - (it.tare || 0)) / per : null; }
       return v;
     }
     function upd() {
-      var s = sisaUnit(), b0 = md === 'gram' ? 0 : (parseNum(bks.value) || 0) * (it.perBks ? 1 : isi);
+      var s = sisaUnit(), b0 = md === 'gram' || md === 'tsemua' ? 0 : (parseNum(bks.value) || 0) * (it.perBks ? 1 : isi);
       tot.textContent = s === null ? fmt(b0) + ' ' + it.sat + ' + timbangan (dihitung nanti)' : fmt(bulat(b0 + s)) + ' ' + it.sat;
       cek();
     }
@@ -781,12 +782,13 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
       utuh: 'Hitung bungkus / box / botol yang masih UTUH saja. Yang sudah dibuka tidak dihitung.',
       bungkus: 'Hitung bungkus utuh. Yang sudah terbuka: perkirakan isinya, tekan ¼ / ½ / ¾.',
       timbang: 'Hitung bungkus utuh, lalu timbang yang sudah dibuka SEKALIAN WADAHNYA (gram).' + (it.full > 0 ? '' : ' Berat bungkus belum diisi Bu Sicillia: gram disimpan, totalnya dihitung otomatis nanti.'),
+      tsemua: 'Timbang SEMUA ' + it.nama + ' sekaligus (boleh di dalam wadah), tulis totalnya dalam gram. Tidak perlu menghitung satu-satu: app yang mengubahnya ke ' + it.sat + (it.full > 0 ? ' (1 ' + it.sat + ' ± ' + fmt(it.full - (it.tare || 0)) + ' g' + (it.tare ? ', wadah ' + fmt(it.tare) + ' g dikurangi otomatis' : '') + ').' : '. Berat 1 ' + it.sat + ' belum diisi Bu Sicillia: gram disimpan, jumlahnya dihitung otomatis nanti.'),
       gram: 'Timbang SEMUA dalam gram: bungkus yang masih utuh + yang sudah terbuka, lalu tulis totalnya. Kalau pakai toples / wadah, kurangi berat wadahnya.',
       biasa: 'Bungkus utuh × ' + fmt(isi) + ' ' + it.sat + ', ditambah sisa yang sudah terbuka dalam ' + it.sat + (it.sat === 'gram' ? ' (timbang).' : '.')
     }[md];
     var lblSisa = { bungkus: 'Bungkus terbuka (¼ ½ ¾)', timbang: 'Yang terbuka, ditimbang (gram + wadah)', biasa: 'Sisa (' + unit + ')' }[md];
     add(c, [h('div', {}, h('h2', { text: it.nama }), h('div', { class: 'sub', text: it.sku + ' · ' + it.pers })), pvCard, field('Tanggal', tgl), note('info', petunjuk),
-      md === 'utuh' ? field('Bungkus utuh', bks) : md === 'gram' ? field('Total ditimbang (gram)', sisa) : h('div', { class: 'g2' }, field('Bungkus utuh', bks), field(lblSisa, sisa)),
+      md === 'utuh' ? field('Bungkus utuh', bks) : md === 'gram' || md === 'tsemua' ? field('Total ditimbang (gram)', sisa) : h('div', { class: 'g2' }, field('Bungkus utuh', bks), field(lblSisa, sisa)),
       md === 'bungkus' ? h('div', { style: 'display:flex;gap:8px' }, [['¼', '0.25'], ['½', '0.5'], ['¾', '0.75'], ['0', '0']].map(function (f) {
         return h('button', { type: 'button', class: 'btn2', style: 'flex:1', text: f[0] === '0' ? 'Tidak ada' : f[0], onclick: function () { sisa.value = f[1]; upd(); } }); })) : null,
       h('div', { style: 'display:flex;justify-content:space-between;font-size:16px;gap:8px' }, h('span', { text: 'Total stok' }), tot), cekBuka, field('Catatan', cat)]);
@@ -800,12 +802,12 @@ h2{margin:0;font-family:'League Spartan',sans-serif;font-weight:800;font-size:20
     b.onclick = function () {
       if (U) {
         clear(box);
-        if ((md === 'gram' ? sisa.value === '' : bks.value === '' && (md === 'utuh' || sisa.value === ''))) return add(box, note('err', 'Isi jumlah yang dihitung ulang.'));
+        if ((md === 'gram' || md === 'tsemua' ? sisa.value === '' : bks.value === '' && (md === 'utuh' || sisa.value === ''))) return add(box, note('err', 'Isi jumlah yang dihitung ulang.'));
         if (!als.value) return add(box, note('err', 'Pilih alasan perkiraan kenapa tidak tally.'));
-        return save(b, box, 'hitung', { row: U.hrow || 0, sku: it.sku, tgl: U.tgl, bks: md === 'gram' ? '' : bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: '', ulang: { alasan: als.value, ket: ket.value } },
+        return save(b, box, 'hitung', { row: U.hrow || 0, sku: it.sku, tgl: U.tgl, bks: md === 'gram' || md === 'tsemua' ? '' : bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: '', ulang: { alasan: als.value, ket: ket.value } },
           function () { S.ulang = null; S.page = 'todo'; S.sel = null; window.scrollTo(0, 0); });
       }
-      save(b, box, 'hitung', { row: ex ? ex.row : 0, sku: it.sku, tgl: tgl.value, bks: md === 'gram' ? '' : bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: cat.value }, function () { S.sel = null; });
+      save(b, box, 'hitung', { row: ex ? ex.row : 0, sku: it.sku, tgl: tgl.value, bks: md === 'gram' || md === 'tsemua' ? '' : bks.value, sisa: md === 'utuh' ? '' : sisa.value, cat: cat.value }, function () { S.sel = null; });
     };
     add(c, [b, box]); add(m, c); upd();
   }
